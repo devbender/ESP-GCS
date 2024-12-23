@@ -9,7 +9,7 @@ void ESP_GCS_PFD::init(esp_gcs_config_t* config) {
   init_fb(config);
 
 
-#define BG_COLOR 0xEE4C //0xC660 //0xC680
+  #define BG_COLOR 0xEE4C //0xC660 //0xC680
   #define OL_COLOR TFT_BLACK
 
   ai.setColorDepth(8);
