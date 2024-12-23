@@ -57,7 +57,8 @@ void ESP_GCS_PFD::init(esp_gcs_config_t* config) {
   
   lvl2.drawSmoothLine(TV1_2, TV2_2, OL_COLOR);
   lvl2.drawSmoothLine(TV2_2, TV3_2, OL_COLOR);
-  
+
+
   // Aircraft -------------------------------------
   #define NOSE    35,0
   #define CENTER  35,7
@@ -70,16 +71,16 @@ void ESP_GCS_PFD::init(esp_gcs_config_t* config) {
   ai.fillTriangle(NOSE, TAIL, RWING, BG_COLOR);
   
   // Aircraft Outlines
-  ai.drawSmoothLine(NOSE, LWING, OL_COLOR);
-  ai.drawSmoothLine(NOSE, RWING, OL_COLOR);
+  ai.drawSmoothLine(NOSE, LWING, TFT_BLACK);
+  ai.drawSmoothLine(NOSE, RWING, TFT_BLACK);
 
-  ai.drawSmoothLine(LWING, TAIL, OL_COLOR);
-  ai.drawSmoothLine(RWING, TAIL, OL_COLOR);
+  ai.drawSmoothLine(LWING, TAIL, TFT_BLACK);
+  ai.drawSmoothLine(RWING, TAIL, TFT_BLACK);
 
   // Internal black Lines
-  ai.drawSmoothLine(NOSE, CENTER, OL_COLOR);
-  ai.drawSmoothLine(CENTER, LWING, OL_COLOR);
-  ai.drawSmoothLine(CENTER, RWING, OL_COLOR);
+  ai.drawSmoothLine(NOSE, CENTER, TFT_BLACK);
+  ai.drawSmoothLine(CENTER, LWING, TFT_BLACK);
+  ai.drawSmoothLine(CENTER, RWING, TFT_BLACK);
   
  
 
@@ -88,6 +89,7 @@ void ESP_GCS_PFD::init(esp_gcs_config_t* config) {
   ti.createSprite(10, 10);
   ti.fillSprite(TFT_TRANSPARENT);
   ti.fillTriangle(5,0, 1,8, 9,8, TFT_WHITE);
+  ti.drawTriangle(5,0, 1,8, 9,8, TFT_WHITE);
 
   // Data indicators
   da.setColorDepth(1);
@@ -140,7 +142,53 @@ void ESP_GCS_PFD::init(esp_gcs_config_t* config) {
   tbr.setTextColor(TFT_GREEN); tbr.drawString("13.92v", 272,8, 1);
 
   preCalcRollReferenceLines();
+
+  // Render Background
+  frame_buffer.fillRect(0,0,                  fb_width, fb_height/2, TFT_SKY);   // SKY
+  frame_buffer.fillRect(0,fb_height/2,        fb_width, fb_height/2, TFT_GND);   // GROUND  
+  frame_buffer.drawSmoothLine(0, fb_height/2, fb_width, fb_height/2, TFT_WHITE);            // HORIZON
+
+
+  renderPFDPitchScale(&frame_buffer, 0);
+  renderPFDTurnIndicator(&frame_buffer);
+
+  // Aircraft and level indicators ---------------------------------------------      
+  int ai_zoom = 1;
+  int ai_x = frame_buffer.width()/2 - ai.width()/2;
+  int ai_y = frame_buffer.height()/2;
+  ai.setPivot(frame_buffer.width()/2 - ai_x, frame_buffer.height()/2 - ai_y);
+  ai.pushRotateZoomWithAA(&frame_buffer, -0, ai_zoom,ai_zoom, TFT_TRANSPARENT);
+
+
+  //lvl1.pushToSprite(&fb, 160-20-50, 120-3, TFT_TRANSPARENT, -inRoll);
+  int l1_offset = 60;
+  int lvl1_x = frame_buffer.width()/2 - lvl1.width()/2 - l1_offset;
+  int lvl1_y = frame_buffer.height()/2 - lvl1.height()/2;
+  lvl1.setPivot(lcd.width()/2 - lvl1_x, lcd.height()/2 - lvl1_y);
+  lvl1.pushRotated(&frame_buffer, 0, TFT_TRANSPARENT);
+
+
+  //lvl2.pushToSprite(&fb, 160+50-10, 120-3, TFT_TRANSPARENT, -inRoll);
+  int l2_offset = 60;
+  int lvl2_x = frame_buffer.width()/2 - lvl2.width()/2 + l2_offset;
+  int lvl2_y = frame_buffer.height()/2 - lvl2.height()/2;
+  lvl2.setPivot(lcd.width()/2 - lvl2_x, lcd.height()/2 - lvl2_y);
+  lvl2.pushRotated(&frame_buffer, 0, TFT_TRANSPARENT);
+
+
+  // Turn indicator ------------------------------------------------------------
+  //ti.pushToSprite(&fb, 155, 32, TFT_TRANSPARENT, -inRoll);  // turn indicator
+  int ti_x = frame_buffer.width()/2 - ti.width()/2;
+  int ti_y = frame_buffer.height()/2 - ti.height()/2 - indicator_rad + 8;
+  ti.setPivot(lcd.width()/2 - ti_x, lcd.height()/2 - ti_y);
+  ti.pushRotated(&frame_buffer, -0, TFT_TRANSPARENT);
+
+
+  // push frame_buffer to LCD
+  frame_buffer.pushRotateZoom(0, 1.2,1.2);
 }
+
+
 
 void ESP_GCS_PFD::render(int pitch, int roll) {
 
@@ -154,9 +202,10 @@ void ESP_GCS_PFD::render(int pitch, int roll) {
 }
 
 
+
 void ESP_GCS_PFD::render(mavlink_heartbeat_t hb, mavlink_attitude_t atti, mavlink_vfr_hud_t hud) {
 
-  #define PITCH_ANGLE_TO_PX 2
+  #define PITCH_ANGLE_TO_PX 1
 
   // ALTITUDE UNITS CONVERSION
   #define M_TO_FT 3.28084
@@ -182,14 +231,44 @@ void ESP_GCS_PFD::render(mavlink_heartbeat_t hb, mavlink_attitude_t atti, mavlin
   
 
   renderPFDPitchScale(&frame_buffer, inPitch);
-  renderPFDTurnIndicator(&frame_buffer);  
+  renderPFDTurnIndicator(&frame_buffer);
+
+
+  // Aircraft and level indicators ---------------------------------------------      
+  int ai_x = frame_buffer.width()/2 - ai.width()/2;
+  int ai_y = frame_buffer.height()/2;
+  ai.setPivot(frame_buffer.width()/2 - ai_x, frame_buffer.height()/2 - ai_y);
+  ai.pushRotateZoomWithAA(&frame_buffer, -inRoll, indicator_zoom,indicator_zoom, TFT_TRANSPARENT);
+
+  //lvl1.pushToSprite(&fb, 160-20-50, 120-3, TFT_TRANSPARENT, -inRoll);
+  int l1_offset = 60;
+  int lvl1_x = frame_buffer.width()/2 - lvl1.width()/2 - l1_offset;
+  int lvl1_y = frame_buffer.height()/2 - lvl1.height()/2;
+  lvl1.setPivot(lcd.width()/2 - lvl1_x, lcd.height()/2 - lvl1_y);
+  lvl1.pushRotateZoomWithAA(&frame_buffer, -inRoll, lvl_zoom,lvl_zoom, TFT_TRANSPARENT);
+
+
+  //lvl2.pushToSprite(&fb, 160+50-10, 120-3, TFT_TRANSPARENT, -inRoll);  
+  int l2_offset = 60;
+  int lvl2_x = frame_buffer.width()/2 - lvl2.width()/2 + l2_offset;
+  int lvl2_y = frame_buffer.height()/2 - lvl2.height()/2;
+  lvl2.setPivot(lcd.width()/2 - lvl2_x, lcd.height()/2 - lvl2_y);
+  lvl2.pushRotateZoomWithAA(&frame_buffer, -inRoll, lvl_zoom,lvl_zoom, TFT_TRANSPARENT);
+
+
+  // Turn indicator ------------------------------------------------------------
+  //ti.pushToSprite(&fb, 155, 32, TFT_TRANSPARENT, -inRoll);  // turn indicator
+  int ti_x = frame_buffer.width()/2 - ti.width()/2;
+  int ti_y = frame_buffer.height()/2 - ti.height()/2 - indicator_rad + 8;
+  ti.setPivot(lcd.width()/2 - ti_x, lcd.height()/2 - ti_y);
+  ti.pushRotateZoomWithAA(&frame_buffer, -inRoll, 1,1, TFT_TRANSPARENT);
 
   //frame_buffer.pushSprite( 0, 0 );
   //frame_buffer.pushSprite(fb_center_x, fb_center_y);
   //frame_buffer.pushRotatedWithAA(inRoll);
   //frame_buffer.pushRotated(inRoll);
   //frame_buffer.pushRotateZoomWithAA(inRoll, 1, 1);
-  frame_buffer.pushRotateZoom(inRoll, 1.2,1.2);
+  frame_buffer.pushRotateZoom(inRoll, framebuffer_zoom,framebuffer_zoom);
 }
 
 

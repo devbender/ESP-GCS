@@ -31,7 +31,11 @@ class ESP_GCS_PFD: public ESP_GCS_SYSTEM {
         char txtBuff[4];
         hbmode_t prevMode;
 
-        int indicator_rad = 80;
+        int indicator_rad = 90;
+
+        float lvl_zoom = 1.2;
+        float indicator_zoom = 1.1;
+        float framebuffer_zoom = 1.2;
     
     public:
         ESP_GCS_PFD();
