@@ -79,25 +79,59 @@ void ESP_GCS_SYSTEM::init_fb(esp_gcs_config_t* config) {
     fb_width = config->fb_width;
     fb_height = config->fb_height;
 
-    frame_buffer.setColorDepth(8);
-    frame_buffer.createSprite(config->fb_width, config->fb_height);
-    frame_buffer.fillSprite(TFT_TRANSPARENT);
+    // layer 0 ------------------------------------------------------------------------
+    base_layer.setColorDepth(4);
+    //base_layer.setColorDepth(8);
+    base_layer.createSprite(config->fb_width, config->fb_height);
+    
+    base_layer.setPaletteColor(COLOR_BLACK, TFT_BLACK);
+    base_layer.setPaletteColor(COLOR_WHITE, TFT_WHITE);
+    base_layer.setPaletteColor(COLOR_SKY, 0x02B5);
+    base_layer.setPaletteColor(COLOR_GND, 0x5140);
+    base_layer.setPaletteColor(COLOR_YELLOW, 0xEE4C);
+    base_layer.setPaletteColor(COLOR_RED, TFT_RED);
+    base_layer.setPaletteColor(6, TFT_BLACK);
+    base_layer.setPaletteColor(7, TFT_BLACK);
+    base_layer.setPaletteColor(8, TFT_BLACK);
+    base_layer.setPaletteColor(9, TFT_BLACK);
+    base_layer.setPaletteColor(10, TFT_BLACK);
+    base_layer.setPaletteColor(11, TFT_BLACK);
+    base_layer.setPaletteColor(12, TFT_BLACK);
+    base_layer.setPaletteColor(13, TFT_BLACK);
+    base_layer.setPaletteColor(14, TFT_BLACK);
+    base_layer.setPaletteColor(COLOR_TRANSPARENT, TFT_TRANSPARENT);    
+    
+    base_layer.fillSprite(COLOR_TRANSPARENT);
 
-    frame_buffer.setTextSize(1);
-    frame_buffer.setTextColor(TFT_WHITE);
-    frame_buffer.drawCenterString("FB init OK!", frame_buffer.width()/2, frame_buffer.height()/2);
+    base_layer.setTextSize(2);
+    base_layer.setTextColor(COLOR_WHITE);
+    base_layer.drawCenterString("INITIALIZING...", base_layer.width()/2, base_layer.height()/2);    
 
-    fb_center_x = ( lcd.width() - frame_buffer.width() )/2;
-    fb_center_y = ( lcd.height() - frame_buffer.height() )/2;
+    fb_center_x = ( lcd.width() - base_layer.width() )/2;
+    fb_center_y = ( lcd.height() - base_layer.height() )/2;
 
-    frame_buffer.pushSprite(fb_center_x, fb_center_y);
+    base_layer.pushSprite(fb_center_x, fb_center_y);
+
+
+    // layer 1 ------------------------------------------------------------------------
+    // fb_layer_1.setColorDepth(8);
+    // fb_layer_1.createSprite(config->fb_width, config->fb_height);
+    // fb_layer_1.fillSprite(TFT_TRANSPARENT);
+
+
+    // top layer ----------------------------------------------------------------------
+    top_layer.setColorDepth(8);
+    top_layer.createSprite(config->fb_width, config->fb_height);
+    top_layer.fillSprite(TFT_TRANSPARENT);
+
+
 
     print_banner();
     print_memory_info();
     print_partition_info();
 
 
-    datalink.init(config);
+    //datalink.init(config);
 }
 
 
@@ -112,11 +146,11 @@ void ESP_GCS_SYSTEM::run() {
         delay(1000);
     }
 
-    frame_buffer.fillSprite(TFT_BLUE);
+    base_layer.fillSprite(TFT_BLUE);
 
     char buff[32];
     snprintf(buff, sizeof(buff), "%.2f     %.2f     %.2f", degrees(datalink.atti.pitch), degrees(datalink.atti.roll), degrees(datalink.atti.yaw));
-    frame_buffer.drawCenterString(buff, frame_buffer.width()/2, frame_buffer.height()/2 - 8);
+    base_layer.drawCenterString(buff, base_layer.width()/2, base_layer.height()/2 - 8);
     
-    frame_buffer.pushSprite(fb_center_x, fb_center_y);
+    base_layer.pushSprite(fb_center_x, fb_center_y);
 }

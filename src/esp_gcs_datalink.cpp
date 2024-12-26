@@ -109,6 +109,10 @@ void ESP_GCS_DATALINK::init(esp_gcs_config_t* _config) {
   
   auto reconnectLambda = [](void* arg, AsyncClient* tcp) { 
     log_d("*** TCP DISCONNECTED ***");
+    
+    atti.pitch = 0.00;
+    atti.roll = 0.00;
+    
     delay(1000);
     reconnect();
   };

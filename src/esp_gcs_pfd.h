@@ -4,7 +4,7 @@
 #include <LovyanGFX.hpp>
 
 #include "esp_gcs_system.h"
-
+#include "esp_gcs_filter.h"
 
 class ESP_GCS_PFD: public ESP_GCS_SYSTEM {
     
@@ -19,6 +19,8 @@ class ESP_GCS_PFD: public ESP_GCS_SYSTEM {
         LGFX_Sprite br = LGFX_Sprite(&lcd);
         LGFX_Sprite tbr = LGFX_Sprite(&lcd);
 
+        LGFX_Sprite spd = LGFX_Sprite(&lcd);
+
         int roll_ref_lines[10][4];
 
         uint16_t TFT_SKY = 0x02B5;
@@ -32,22 +34,43 @@ class ESP_GCS_PFD: public ESP_GCS_SYSTEM {
         hbmode_t prevMode;
 
         int indicator_rad = 90;
+        int level_offset = 60;
 
-        float lvl_zoom = 1.2;
-        float indicator_zoom = 1.1;
+        float aircraft_level_size = 1.2;
+        float aircraft_indicator_size = 1.1;
         float framebuffer_zoom = 1.2;
+        float side_indicators_size = 1;
+
+        esp_gcs_filter_t pitch_filter, roll_filter;
     
     public:
         ESP_GCS_PFD();
+
+
         void init(esp_gcs_config_t* config);
-        void render(int pitch, int roll);
-        void render(mavlink_heartbeat_t hb, mavlink_attitude_t atti, mavlink_vfr_hud_t hud);
+        void init2(esp_gcs_config_t* config);
+        
+        void render(float pitch, float roll);
+        void render(int pitch, int roll, bool t);
+        void render2(mavlink_heartbeat_t hb, mavlink_attitude_t atti, mavlink_vfr_hud_t hud);
+
+        void render_all(mavlink_heartbeat_t hb, mavlink_attitude_t atti, mavlink_vfr_hud_t hud);
 
 
     private:
+
+        void init_base_layer(void);
+        void init_top_layer(void);
+
+        void render_base_layer(mavlink_attitude_t atti);
+        void render_top_layer(mavlink_attitude_t atti);
+
         void checkButtons();
         void calculateFPS();
-        void preCalcRollReferenceLines();
-        void renderPFDTurnIndicator(LGFX_Sprite *sp);
-        void renderPFDPitchScale(LGFX_Sprite *sp, int pitchPx);
+        void precalculate_roll_ref_lines();
+        
+        void render_turn_indicator(LGFX_Sprite *sp);
+        void render_pitch_scale(LGFX_Sprite *sp, int pitchPx);
+        void render_aircraft(LGFX_Sprite *sp, int inRoll);
+        void render_side_indicators(LGFX_Sprite *sp, int inRoll, int alt, int spd);
 };

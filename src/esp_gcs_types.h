@@ -82,3 +82,13 @@ const fmode_t flightModes[] = {
   {"SPORT",     TFT_CYAN,     {0,0},    {81,13} }, // >> not armable mode
   {"POS HOLD",  TFT_BLUE,     {217,16}, {89,16} }                          
 };
+
+
+
+enum filter_t {
+  RAW,
+  MEDIAN,
+  M_AVERAGE,
+  W_AVERAGE,  
+  KALMAN_FILTER
+};

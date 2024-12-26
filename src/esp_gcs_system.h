@@ -7,6 +7,7 @@
 #include <esp_heap_caps.h> // For PSRAM size
 #include <esp_partition.h> // for partitions
 
+#include "my_esp_gcs_config.h"
 #include "esp_gcs_datalink.h"
 #include "esp_gcs_display_parallel16_9488.h"
 #include "esp_gcs_display_spi_9342.h"
@@ -23,7 +24,8 @@ class ESP_GCS_SYSTEM {
         uint16_t fb_width, fb_height;
 
         LGFX_Parallel_9488 lcd;        
-        LGFX_Sprite frame_buffer = LGFX_Sprite(&lcd);
+        LGFX_Sprite base_layer = LGFX_Sprite(&lcd);        
+        LGFX_Sprite top_layer = LGFX_Sprite(&lcd);
 
     public:
         static ESP_GCS_DATALINK datalink;        
