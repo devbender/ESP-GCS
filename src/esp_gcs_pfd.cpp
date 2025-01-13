@@ -8,9 +8,19 @@ void ESP_GCS_PFD::init(esp_gcs_config_t* config) {
   init_base_layer();
   init_top_layer();
 
-  render(0.00, 0.00);
+  //render(0.00, 0.00);
+  base_layer.pushRotateZoom(&top_layer, 0, 1.2,1.2);  
+  init_top_layer();
+  top_layer.pushSprite(0, 0);
+  
   datalink.init(config);
 
+  // set filtering params
+  pitch_filter.setSamples(10);
+  pitch_filter.setWAParams(0.10, 0.5, 0.85);
+
+  roll_filter.setSamples(10);
+  roll_filter.setWAParams(0.10, 0.5, 0.85);
 
   log_d("Free RAM: %.2f KB\n", ESP.getFreeHeap() / 1024.0);
 }
@@ -28,12 +38,132 @@ void ESP_GCS_PFD::init_base_layer(void) {
 
   precalculate_roll_ref_lines();
   render_turn_indicator(&base_layer);
+
+  // red lines
+  //base_layer.drawWideLine(0,0, base_layer.width(), base_layer.height(), 2, COLOR_RED);
+  //base_layer.drawWideLine(base_layer.width(),0, 0, base_layer.height(), 2, COLOR_RED);
+
+  base_layer.drawLine(0,0, base_layer.width(), base_layer.height(), COLOR_RED);
+  base_layer.drawLine(base_layer.width(),0, 0, base_layer.height(), COLOR_RED);
+
+  // data aqc
+  base_layer.setTextSize(2);
+  base_layer.setTextColor(COLOR_RED);  
+  base_layer.drawCenterString("NO DATA", base_layer.width()/2, base_layer.height()/2 - 120);
 }
 
 
 void ESP_GCS_PFD::init_top_layer(void) {
 
+  // Left Level ----------------------------------    
+  #define RWH 25,7    
+  #define TV1 25,0
+  #define TV2 29,3
+  #define TV3 25,6
 
+  lvl1.setColorDepth(4);
+  set_palette_4bit(&lvl1);
+  lvl1.createSprite(30, 7);
+  lvl1.fillSprite(COLOR_TRANSPARENT);
+  
+  lvl1.fillRect(0,0, RWH, COLOR_YELLOW);
+  lvl1.fillTriangle(TV1, TV2, TV3, COLOR_YELLOW);
+
+  lvl1.drawLine(0,0, TV1, COLOR_BLACK);
+  lvl1.drawLine(0,0, 0,7, COLOR_BLACK);
+  lvl1.drawLine(0,6, TV3, COLOR_BLACK);    
+  
+  lvl1.drawLine(TV1, TV2, COLOR_BLACK);
+  lvl1.drawLine(TV2, TV3, COLOR_BLACK);
+
+
+  // Right Level ----------------------------------
+  #define RWH_2 25,8
+  #define TV1_2 5,0
+  #define TV2_2 0,3
+  #define TV3_2 5,6
+
+  lvl2.setColorDepth(4);
+  set_palette_4bit(&lvl2);
+  lvl2.createSprite(30, 7);
+  lvl2.fillSprite(COLOR_TRANSPARENT);
+  
+  lvl2.fillRect(5,0, RWH_2, COLOR_YELLOW);
+  lvl2.fillTriangle(TV1_2, TV2_2, TV3_2, COLOR_YELLOW);
+
+  lvl2.drawLine(29,0, TV1_2, COLOR_BLACK);    
+  lvl2.drawLine(29,0, 29,7, COLOR_BLACK);
+  lvl2.drawLine(29,6, TV3_2, COLOR_BLACK);
+  
+  lvl2.drawLine(TV1_2, TV2_2, COLOR_BLACK);
+  lvl2.drawLine(TV2_2, TV3_2, COLOR_BLACK);
+
+
+  // Aircraft -------------------------------------
+  #define NOSE    35,0
+  #define CENTER  35,7
+  #define TAIL    35,12
+  #define LWING   0,21
+  #define RWING   70,21
+
+  ai.setColorDepth(4);
+  set_palette_4bit(&ai);
+  ai.createSprite(70, 21);
+  ai.fillSprite(COLOR_TRANSPARENT);
+  
+  //  Triangles
+  ai.fillTriangle(NOSE, TAIL, LWING, COLOR_YELLOW);
+  ai.fillTriangle(NOSE, TAIL, RWING, COLOR_YELLOW);
+  
+  // Aircraft Outlines
+  ai.drawLine(NOSE, LWING, COLOR_BLACK);
+  ai.drawLine(NOSE, RWING, COLOR_BLACK);
+
+  ai.drawLine(LWING, TAIL, COLOR_BLACK);
+  ai.drawLine(RWING, TAIL, COLOR_BLACK);
+
+  // Internal black Lines
+  ai.drawLine(NOSE, CENTER, COLOR_BLACK);
+  ai.drawLine(CENTER, LWING, COLOR_BLACK);
+  ai.drawLine(CENTER, RWING, COLOR_BLACK);
+
+  // Turn Angle Indicator Sprite -------------------
+  ti.setColorDepth(4);
+  set_palette_4bit(&ti);
+  ti.createSprite(10, 10);
+  ti.fillSprite(COLOR_TRANSPARENT);
+  ti.fillTriangle(5,0, 1,8, 9,8, COLOR_WHITE);
+  ti.drawTriangle(5,0, 1,8, 9,8, COLOR_WHITE);
+
+
+  // aircraft indicator
+  ai_x = base_layer.width()/2 - ai.width()/2;
+  ai_y = base_layer.height()/2;
+  ai.setPivot(base_layer.width()/2 - ai_x, base_layer.height()/2 - ai_y);
+
+  ai.pushRotateZoom(&top_layer, 0, aircraft_indicator_size,aircraft_indicator_size, COLOR_TRANSPARENT);
+
+  // left level  
+  lvl1_x = base_layer.width()/2 - lvl1.width()/2 - level_offset;
+  lvl1_y = base_layer.height()/2 - lvl1.height()/2;
+  lvl1.setPivot(base_layer.width()/2 - lvl1_x, base_layer.height()/2 - lvl1_y);
+
+  lvl1.pushRotateZoom(&top_layer, 0, aircraft_level_size,aircraft_level_size, COLOR_TRANSPARENT);
+
+  // right level 
+  lvl2_x = base_layer.width()/2 - lvl2.width()/2 + level_offset;
+  lvl2_y = base_layer.height()/2 - lvl2.height()/2;
+  lvl2.setPivot(base_layer.width()/2 - lvl2_x, base_layer.height()/2 - lvl2_y);
+  
+  lvl2.pushRotateZoom(&top_layer, 0, aircraft_level_size,aircraft_level_size, COLOR_TRANSPARENT);
+
+
+  // top turn indicator
+  ti_x = base_layer.width()/2 - ti.width()/2;
+  ti_y = base_layer.height()/2 - ti.height()/2 - indicator_rad - 10;
+  ti.setPivot(base_layer.width()/2 - ti_x, base_layer.height()/2 - ti_y);
+  
+  ti.pushRotateZoom(&top_layer, 0, 1,1, COLOR_TRANSPARENT);
 }
   
 
@@ -44,11 +174,11 @@ void ESP_GCS_PFD::render(float pitch, float roll) {
 
   log_d("%.2f    %.2f", inPitch0, inRoll0);
   
-  base_layer.pushRotateZoom(&top_layer, inRoll0, 1.2,1.2);
+  base_layer.pushRotateZoom(&top_layer, inRoll0, 1.2,1.2);  
 
   int ind_w = 80;
-  top_layer.fillRectAlpha(0, 0, ind_w, fb_height, 128, TFT_BLACK);
-  top_layer.fillRectAlpha(fb_width - ind_w, 0, ind_w, fb_height, 128, TFT_BLACK);
+  //top_layer.fillRectAlpha(0, 0, ind_w, fb_height, 128, COLOR_BLACK);
+  //top_layer.fillRectAlpha(fb_width - ind_w, 0, ind_w, fb_height, 128, COLOR_BLACK);
 
   top_layer.pushSprite(0, 0);
 }
@@ -58,11 +188,14 @@ void ESP_GCS_PFD::render(float pitch, float roll) {
 
 void ESP_GCS_PFD::render_base_layer(mavlink_attitude_t atti) {
 
-  int inPitch = round( degrees(atti.pitch) );
+  float inPitch0 = degrees(atti.pitch) * 4;
+  pitch_filter.add( inPitch0 );
+  float inPitch1 = pitch_filter.mavg();
+  int inPitch = round( inPitch1 );
 
   // Render Background
-  base_layer.fillRect(0,0,                  fb_width, fb_height/2+inPitch, COLOR_SKY);   // SKY
-  base_layer.fillRect(0,fb_height/2,        fb_width, fb_height/2-inPitch, COLOR_GND);   // GROUND    
+  base_layer.fillRect(0,0,                    fb_width, fb_height/2+inPitch, COLOR_SKY);   // SKY
+  base_layer.fillRect(0,fb_height/2+inPitch,  fb_width, fb_height/2-inPitch, COLOR_GND);   // GROUND    
   base_layer.drawLine(0, fb_height/2+inPitch, fb_width, fb_height/2+inPitch, COLOR_WHITE);       // HORIZON
 
   render_pitch_scale(&base_layer, inPitch);
@@ -72,12 +205,17 @@ void ESP_GCS_PFD::render_base_layer(mavlink_attitude_t atti) {
 
 void ESP_GCS_PFD::render_top_layer(mavlink_attitude_t atti) {
   
-  float inRoll = -degrees( atti.roll );
-  base_layer.pushRotateZoom(&top_layer, inRoll, 1.2,1.2);
+  float inRoll0 = -degrees( atti.roll );
+  roll_filter.add( inRoll0 );
+  float inRoll1 = roll_filter.mavg() ; //.wavg();
+  int inRoll = round( inRoll1 );
 
-  int ind_w = 80;
-  top_layer.fillRectAlpha(0, 0, ind_w, fb_height, 128, TFT_BLACK);
-  top_layer.fillRectAlpha(fb_width - ind_w, 0, ind_w, fb_height, 128, TFT_BLACK);
+  base_layer.pushRotateZoom(&top_layer, inRoll, 1.2,1.2);  
+
+  ai.pushRotateZoom(&top_layer, 0, aircraft_indicator_size,aircraft_indicator_size, COLOR_TRANSPARENT);
+  lvl1.pushRotateZoom(&top_layer, 0, aircraft_level_size,aircraft_level_size, COLOR_TRANSPARENT);
+  lvl2.pushRotateZoom(&top_layer, 0, aircraft_level_size,aircraft_level_size, COLOR_TRANSPARENT);
+  ti.pushRotateZoom(&top_layer, 0, 1,1, COLOR_TRANSPARENT);
 
   top_layer.pushSprite(0, 0);
 }

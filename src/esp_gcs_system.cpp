@@ -80,27 +80,9 @@ void ESP_GCS_SYSTEM::init_fb(esp_gcs_config_t* config) {
     fb_height = config->fb_height;
 
     // layer 0 ------------------------------------------------------------------------
-    base_layer.setColorDepth(4);
-    //base_layer.setColorDepth(8);
-    base_layer.createSprite(config->fb_width, config->fb_height);
-    
-    base_layer.setPaletteColor(COLOR_BLACK, TFT_BLACK);
-    base_layer.setPaletteColor(COLOR_WHITE, TFT_WHITE);
-    base_layer.setPaletteColor(COLOR_SKY, 0x02B5);
-    base_layer.setPaletteColor(COLOR_GND, 0x5140);
-    base_layer.setPaletteColor(COLOR_YELLOW, 0xEE4C);
-    base_layer.setPaletteColor(COLOR_RED, TFT_RED);
-    base_layer.setPaletteColor(6, TFT_BLACK);
-    base_layer.setPaletteColor(7, TFT_BLACK);
-    base_layer.setPaletteColor(8, TFT_BLACK);
-    base_layer.setPaletteColor(9, TFT_BLACK);
-    base_layer.setPaletteColor(10, TFT_BLACK);
-    base_layer.setPaletteColor(11, TFT_BLACK);
-    base_layer.setPaletteColor(12, TFT_BLACK);
-    base_layer.setPaletteColor(13, TFT_BLACK);
-    base_layer.setPaletteColor(14, TFT_BLACK);
-    base_layer.setPaletteColor(COLOR_TRANSPARENT, TFT_TRANSPARENT);    
-    
+    base_layer.setColorDepth(4);    
+    base_layer.createSprite(config->fb_width, config->fb_height);    
+    set_palette_4bit(&base_layer);    
     base_layer.fillSprite(COLOR_TRANSPARENT);
 
     base_layer.setTextSize(2);
@@ -120,8 +102,10 @@ void ESP_GCS_SYSTEM::init_fb(esp_gcs_config_t* config) {
 
 
     // top layer ----------------------------------------------------------------------
-    top_layer.setColorDepth(8);
+    //top_layer.setColorDepth(8);
+    top_layer.setColorDepth(4);    
     top_layer.createSprite(config->fb_width, config->fb_height);
+    set_palette_4bit(&top_layer);
     top_layer.fillSprite(TFT_TRANSPARENT);
 
 
@@ -153,4 +137,27 @@ void ESP_GCS_SYSTEM::run() {
     base_layer.drawCenterString(buff, base_layer.width()/2, base_layer.height()/2 - 8);
     
     base_layer.pushSprite(fb_center_x, fb_center_y);
+}
+
+
+
+void ESP_GCS_SYSTEM::set_palette_4bit(LGFX_Sprite *layer) {
+
+    layer->setPaletteColor(COLOR_BLACK, TFT_BLACK);
+    layer->setPaletteColor(COLOR_WHITE, TFT_WHITE);
+    layer->setPaletteColor(COLOR_SKY, 0x02B5);
+    layer->setPaletteColor(COLOR_GND, 0x5140);
+    layer->setPaletteColor(COLOR_YELLOW, 0xEE4C);
+    layer->setPaletteColor(COLOR_RED, TFT_RED);
+    layer->setPaletteColor(6, TFT_BLACK);
+    layer->setPaletteColor(7, TFT_BLACK);
+    layer->setPaletteColor(8, TFT_BLACK);
+    layer->setPaletteColor(9, TFT_BLACK);
+    layer->setPaletteColor(10, TFT_BLACK);
+    layer->setPaletteColor(11, TFT_BLACK);
+    layer->setPaletteColor(12, TFT_BLACK);
+    layer->setPaletteColor(13, TFT_BLACK);
+    layer->setPaletteColor(14, TFT_BLACK);
+    layer->setPaletteColor(COLOR_TRANSPARENT, TFT_TRANSPARENT);
+
 }

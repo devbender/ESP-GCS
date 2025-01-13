@@ -41,6 +41,8 @@ class ESP_GCS_PFD: public ESP_GCS_SYSTEM {
         float framebuffer_zoom = 1.2;
         float side_indicators_size = 1;
 
+        float ai_x, ai_y, lvl1_x, lvl1_y, lvl2_x, lvl2_y, ti_x, ti_y;
+
         esp_gcs_filter_t pitch_filter, roll_filter;
     
     public:

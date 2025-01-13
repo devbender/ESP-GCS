@@ -37,7 +37,9 @@ class ESP_GCS_SYSTEM {
         
         void print_banner(void);
         void print_memory_info(void);
-        void print_partition_info(void);       
+        void print_partition_info(void);
+
+        void set_palette_4bit(LGFX_Sprite *sp);
 
         void run();    
 };
