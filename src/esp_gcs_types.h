@@ -29,15 +29,21 @@ enum esp_gcs_proto_t {
 
 
 struct esp_gcs_config_t {
+  
+  esp_gcs_display_t display;
+  uint16_t fb_width, fb_height;
+
+  esp_gcs_proto_t protocol;  
+  
+  struct {
     const char* ssid;
     const char* password;
+    const uint8_t* mac;
 
-    IPAddress ip;
-    esp_gcs_proto_t protocol;
+    IPAddress ip;  
     int port;
-
-    esp_gcs_display_t display;
-    uint16_t fb_width, fb_height;
+  } network;
+  
 };
 
 

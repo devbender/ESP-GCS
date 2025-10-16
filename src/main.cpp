@@ -11,20 +11,28 @@ ESP_GCS_PFD pfd;
 ESP_GCS_ADSB adsb;
 ESP_GCS_HSI hsi;
 
+esp_gcs_config_t config;
+
 void setup() {
-    log_d("Free RAM: %.2f KB\n", ESP.getFreeHeap() / 1024.0);
-    esp_gcs_config_t config {WIFI_SSID, WIFI_PASS, IPAddress(10,0,0,168), TCP, 3000, PARALLEL_9488, 480, 320};
+    config.display = PARALLEL_9488;
+    config.fb_width = 480;
+    config.fb_height = 320;
+
+    config.protocol = TCP;
+    
+    config.network.ssid = WIFI_SSID;
+    config.network.password = WIFI_PASS;
+    config.network.ip = IPAddress(10,0,0,168);
+    config.network.port = 3000;
     
     //pfd.init( &config );
     adsb.init( &config );
     //hsi.init( &config );
 }
 
-void loop() {
-    //pfd.render( pfd.datalink.hb, pfd.datalink.atti, pfd.datalink.hud);
-    //pfd.render( pfd.datalink.atti.pitch, pfd.datalink.atti.roll);
-    //pfd.render_all( pfd.datalink.hb, pfd.datalink.atti, pfd.datalink.hud);
+void loop() {   
     
     adsb.render();
     //hsi.render();
+    //pfd.render_all( pfd.datalink.hb, pfd.datalink.atti, pfd.datalink.hud);
 }

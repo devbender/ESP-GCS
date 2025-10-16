@@ -2,6 +2,10 @@
 
 ## Building the Project
 
+### 0. Config
+
+Rename esp_gcs_config.h to my_esp_gcs_config.h and update values
+
 ### 1. Fetch Git Submodules
 
 Before building, make sure to fetch all git submodules:

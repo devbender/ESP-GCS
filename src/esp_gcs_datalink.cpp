@@ -89,45 +89,44 @@ void ESP_GCS_DATALINK::init(esp_gcs_config_t* _config) {
 
   log_d("datalink init");
 
-  config.ip = _config->ip;
-  config.port = _config->port;
+  config.network.ip = _config->network.ip;
+  config.network.port = _config->network.port;
 
   WiFi.mode(WIFI_STA);
-  WiFi.begin(_config->ssid, _config->password);
+  WiFi.begin(_config->network.ssid, _config->network.password);
 
-  if (WiFi.waitForConnectResult() != WL_CONNECTED)  
-    log_d("wifi connection error");    
-  else  
-    log_d("wifi connected!  IP: %s", WiFi.localIP().toString().c_str());      
+  if (WiFi.waitForConnectResult() != WL_CONNECTED)  {
+    log_d("wifi connection error");
+    return;  
+  }
   
+  log_d("wifi connected!  IP: %s", WiFi.localIP().toString().c_str());
   delay(100); 
 
 
-  auto onConnectLambda = [](void* arg, AsyncClient* tcp) { 
-    log_d("TCP connected: %s | %i", tcp->remoteIP().toString().c_str(), tcp->remotePort() ); 
-  };
+  tcp.onConnect( [this](void* arg, AsyncClient* tcp) { 
+    log_d("TCP connected: %s | %i", 
+      tcp->remoteIP().toString().c_str(), 
+      tcp->remotePort() ); 
+  }, nullptr);
   
-  auto reconnectLambda = [](void* arg, AsyncClient* tcp) { 
+  tcp.onDisconnect( [this](void* arg, AsyncClient* tcp) { 
     log_d("*** TCP DISCONNECTED ***");
     
-    atti.pitch = 0.00;
-    atti.roll = 0.00;
+    atti.pitch = 0.0f;
+    atti.roll = 0.0f;
     
-    delay(1000);
-    reconnect();
-  };
+    this->reconnect();
+  }, nullptr );
 
-  tcp.onData(&ESP_GCS_DATALINK::processTCP, &tcp);
-  tcp.onConnect(onConnectLambda, &tcp);      
-  tcp.connect(_config->ip, _config->port);
-  tcp.onDisconnect( reconnectLambda, &tcp  );
+  tcp.onData(&ESP_GCS_DATALINK::processTCP, &tcp);  
+  tcp.connect(_config->network.ip, _config->network.port);  
   delay(100);
-
 }
 
 
 //#####################################################################################
 void ESP_GCS_DATALINK::reconnect(){
-  tcp.connect(config.ip, config.port);
+  tcp.connect(config.network.ip, config.network.port);
 
 }

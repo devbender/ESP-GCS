@@ -14,9 +14,11 @@ void ESP_GCS_SYSTEM::print_memory_info() {
     size_t psram_free = heap_caps_get_free_size(MALLOC_CAP_SPIRAM);
     size_t psram_total = heap_caps_get_total_size(MALLOC_CAP_SPIRAM);
 
+    log_d("Free RAM: %.2f KB", ESP.getFreeHeap() / 1024.0);
     log_d("Total PSRAM Size: %.2f MB", psram_total / (1024.0 * 1024));
     log_d("Free PSRAM: %.2f MB", psram_free / (1024.0 * 1024));    
 }
+
 
 
 
@@ -68,7 +70,10 @@ void ESP_GCS_SYSTEM::init_fb(esp_gcs_config_t* config) {
         digitalWrite(LCD_BLK, HIGH);
     }
 
-    else if(config->display == SPI_9342) { }
+    else if(config->display == SPI_9342) { 
+        //TODO: implement
+    }
+
     else {}
 
     lcd.init();
@@ -83,7 +88,7 @@ void ESP_GCS_SYSTEM::init_fb(esp_gcs_config_t* config) {
     base_layer.setColorDepth(4);    
     base_layer.createSprite(config->fb_width, config->fb_height);    
     set_palette_4bit(&base_layer);    
-    base_layer.fillSprite(COLOR_TRANSPARENT);
+    base_layer.fillSprite(COLOR_BLACK); //base_layer.fillSprite(COLOR_TRANSPARENT);
 
     base_layer.setTextSize(2);
     base_layer.setTextColor(COLOR_WHITE);
@@ -112,10 +117,8 @@ void ESP_GCS_SYSTEM::init_fb(esp_gcs_config_t* config) {
 
     print_banner();
     print_memory_info();
-    print_partition_info();
-
-
-    //datalink.init(config);
+    
+    print_partition_info();        
 }
 
 
@@ -148,15 +151,15 @@ static inline uint16_t RGB(uint8_t R, uint8_t G, uint8_t B) {
 
 void ESP_GCS_SYSTEM::set_palette_4bit(LGFX_Sprite *layer) {
 
-    layer->setPaletteColor(COLOR_BLACK, TFT_BLACK);
-    layer->setPaletteColor(COLOR_WHITE, TFT_WHITE);
-    layer->setPaletteColor(COLOR_SKY, 0x02B5);
-    layer->setPaletteColor(COLOR_GND, 0x5140);
-    layer->setPaletteColor(COLOR_YELLOW, 0xEE4C);
-    layer->setPaletteColor(COLOR_RED, TFT_RED);
-    layer->setPaletteColor(UI_BACKGROUND_COLOR, RGB( 60, 60, 60 ) ); //layer->setPaletteColor(6, TFT_BLACK);
-    layer->setPaletteColor(UI_TOP_BAR_DIV_LINE_COLOR, RGB( 150, 150, 150 ) );
-    layer->setPaletteColor(UI_OUTER_CIRCLE_COLOR, RGB( 150, 150, 150 ) );
+    layer->setPaletteColor(COLOR_BLACK,     TFT_BLACK);
+    layer->setPaletteColor(COLOR_WHITE,     TFT_WHITE);
+    layer->setPaletteColor(COLOR_SKY,       0x02B5);
+    layer->setPaletteColor(COLOR_GND,       0x5140);
+    layer->setPaletteColor(COLOR_YELLOW,    0xEE4C);
+    layer->setPaletteColor(COLOR_RED,       TFT_RED);
+    layer->setPaletteColor(UI_BACKGROUND_COLOR,         RGB( 60, 60, 60 ) ); //layer->setPaletteColor(6, TFT_BLACK);
+    layer->setPaletteColor(UI_TOP_BAR_DIV_LINE_COLOR,   RGB( 150, 150, 150 ) );
+    layer->setPaletteColor(UI_OUTER_CIRCLE_COLOR,       RGB( 150, 150, 150 ) );
     layer->setPaletteColor(9, TFT_BLACK);
     layer->setPaletteColor(10, TFT_BLACK);
     layer->setPaletteColor(11, TFT_BLACK);

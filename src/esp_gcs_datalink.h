@@ -25,8 +25,8 @@ public:
   static mavlink_attitude_t atti; 
 
 public:  
-  static void init(esp_gcs_config_t* config);
-  static void reconnect(void);
+  void init(esp_gcs_config_t* config);
+  void reconnect(void);
 
 private:  
   static const char* mav_state_to_string(int state);

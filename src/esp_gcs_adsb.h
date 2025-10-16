@@ -6,6 +6,11 @@
 
 #include "esp_gcs_system.h"
 
+#define AIRCRAFT_SIZE	6
+#define VECTOR_SIZE 	20
+#define AIRPORT_SIZE	3
+#define AIRCRAFT_TTL 	30
+
 class ESP_GCS_ADSB: public ESP_GCS_SYSTEM {
     
     private:
@@ -25,5 +30,5 @@ class ESP_GCS_ADSB: public ESP_GCS_SYSTEM {
         void init_top_layer(void);
 
         void render();
-        void render_top_layer();
+        void render_top_layer();        
 };
