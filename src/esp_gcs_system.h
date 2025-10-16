@@ -7,6 +7,7 @@
 #include <esp_heap_caps.h> // For PSRAM size
 #include <esp_partition.h> // for partitions
 
+#include "esp_gcs_colors.h"
 #include "my_esp_gcs_config.h"
 #include "esp_gcs_datalink.h"
 #include "esp_gcs_display_parallel16_9488.h"

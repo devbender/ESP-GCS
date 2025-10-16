@@ -21,7 +21,9 @@ enum esp_gcs_touch_t {
 
 enum esp_gcs_proto_t {
     TCP,
-    UDP
+    UDP,
+    BLUETOOTH,
+    ESPNOW
 };
 
 

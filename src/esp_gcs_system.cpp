@@ -140,6 +140,11 @@ void ESP_GCS_SYSTEM::run() {
 }
 
 
+// RGB to 565 coversion
+static inline uint16_t RGB(uint8_t R, uint8_t G, uint8_t B) {
+  return ((R & 0xF8) << 8) | ((G & 0xFC) << 3) | (B >> 3);
+}
+
 
 void ESP_GCS_SYSTEM::set_palette_4bit(LGFX_Sprite *layer) {
 
@@ -149,9 +154,9 @@ void ESP_GCS_SYSTEM::set_palette_4bit(LGFX_Sprite *layer) {
     layer->setPaletteColor(COLOR_GND, 0x5140);
     layer->setPaletteColor(COLOR_YELLOW, 0xEE4C);
     layer->setPaletteColor(COLOR_RED, TFT_RED);
-    layer->setPaletteColor(6, TFT_BLACK);
-    layer->setPaletteColor(7, TFT_BLACK);
-    layer->setPaletteColor(8, TFT_BLACK);
+    layer->setPaletteColor(UI_BACKGROUND_COLOR, RGB( 60, 60, 60 ) ); //layer->setPaletteColor(6, TFT_BLACK);
+    layer->setPaletteColor(UI_TOP_BAR_DIV_LINE_COLOR, RGB( 150, 150, 150 ) );
+    layer->setPaletteColor(UI_OUTER_CIRCLE_COLOR, RGB( 150, 150, 150 ) );
     layer->setPaletteColor(9, TFT_BLACK);
     layer->setPaletteColor(10, TFT_BLACK);
     layer->setPaletteColor(11, TFT_BLACK);
