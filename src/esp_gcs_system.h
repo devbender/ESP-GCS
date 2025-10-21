@@ -29,7 +29,7 @@ class ESP_GCS_SYSTEM {
         LGFX_Sprite top_layer = LGFX_Sprite(&lcd);
 
     public:
-        static ESP_GCS_DATALINK datalink;        
+        ESP_GCS_DATALINK datalink;        
 
     public:
         ESP_GCS_SYSTEM();

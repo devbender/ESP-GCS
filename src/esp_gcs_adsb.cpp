@@ -45,10 +45,9 @@ void ESP_GCS_ADSB::init(esp_gcs_config_t* config) {
   //top_layer.pushSprite(0, 0);
 
   render_top_layer();
-  
-  //datalink.init(config);
-
   log_d("ADS-B Free RAM: %.2f KB\n", ESP.getFreeHeap() / 1024.0);
+
+  datalink.init(config);
 }
 
 

@@ -29,10 +29,10 @@ public:
   void reconnect(void);
 
 private:  
-  static const char* mav_state_to_string(int state);
-  static void processMavlink(const mavlink_message_t mvMsg);  
-  static void processTCP(void* arg, AsyncClient* client, void *data, size_t len);
+  static const char* mav_state_to_string(int state);  
   
+  static void process_mavlink(void* arg, AsyncClient* client, void *data, size_t len);
+  static void process_sbs1(void* arg, AsyncClient* client, void *data, size_t len);
 };
 
 //#####################################################################################

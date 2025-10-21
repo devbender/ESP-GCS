@@ -61,7 +61,7 @@ void ESP_GCS_SYSTEM::print_partition_info() {
 void ESP_GCS_SYSTEM::init_fb(esp_gcs_config_t* config) {
 
 
-    if(config->display == PARALLEL_9488) {
+    if(config->display.type == PARALLEL_9488) {
         // Pin init
         pinMode(LCD_CS, OUTPUT);
         pinMode(LCD_BLK, OUTPUT);
@@ -70,7 +70,7 @@ void ESP_GCS_SYSTEM::init_fb(esp_gcs_config_t* config) {
         digitalWrite(LCD_BLK, HIGH);
     }
 
-    else if(config->display == SPI_9342) { 
+    else if(config->display.type == SPI_9342) { 
         //TODO: implement
     }
 
@@ -81,12 +81,12 @@ void ESP_GCS_SYSTEM::init_fb(esp_gcs_config_t* config) {
     lcd.fillScreen(TFT_BLACK);
     lcd.setPivot( lcd.width()/2, lcd.height()/2 );
 
-    fb_width = config->fb_width;
-    fb_height = config->fb_height;
+    fb_width = config->display.width;
+    fb_height = config->display.height;
 
     // layer 0 ------------------------------------------------------------------------
     base_layer.setColorDepth(4);    
-    base_layer.createSprite(config->fb_width, config->fb_height);    
+    base_layer.createSprite(config->display.width, config->display.height);    
     set_palette_4bit(&base_layer);    
     base_layer.fillSprite(COLOR_BLACK); //base_layer.fillSprite(COLOR_TRANSPARENT);
 
@@ -109,7 +109,7 @@ void ESP_GCS_SYSTEM::init_fb(esp_gcs_config_t* config) {
     // top layer ----------------------------------------------------------------------
     //top_layer.setColorDepth(8);
     top_layer.setColorDepth(4);    
-    top_layer.createSprite(config->fb_width, config->fb_height);
+    top_layer.createSprite(config->display.width, config->display.height);
     set_palette_4bit(&top_layer);
     top_layer.fillSprite(TFT_TRANSPARENT);
 
@@ -157,15 +157,17 @@ void ESP_GCS_SYSTEM::set_palette_4bit(LGFX_Sprite *layer) {
     layer->setPaletteColor(COLOR_GND,       0x5140);
     layer->setPaletteColor(COLOR_YELLOW,    0xEE4C);
     layer->setPaletteColor(COLOR_RED,       TFT_RED);
+    
     layer->setPaletteColor(UI_BACKGROUND_COLOR,         RGB( 60, 60, 60 ) ); //layer->setPaletteColor(6, TFT_BLACK);
     layer->setPaletteColor(UI_TOP_BAR_DIV_LINE_COLOR,   RGB( 150, 150, 150 ) );
     layer->setPaletteColor(UI_OUTER_CIRCLE_COLOR,       RGB( 150, 150, 150 ) );
+    
     layer->setPaletteColor(9, TFT_BLACK);
     layer->setPaletteColor(10, TFT_BLACK);
     layer->setPaletteColor(11, TFT_BLACK);
     layer->setPaletteColor(12, TFT_BLACK);
     layer->setPaletteColor(13, TFT_BLACK);
     layer->setPaletteColor(14, TFT_BLACK);
+    
     layer->setPaletteColor(COLOR_TRANSPARENT, TFT_TRANSPARENT);
-
 }

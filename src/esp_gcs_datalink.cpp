@@ -36,50 +36,50 @@ const char* ESP_GCS_DATALINK::mav_state_to_string(int state) {
 
 
 //#####################################################################################
-void ESP_GCS_DATALINK::processMavlink(const mavlink_message_t mvMsg) {
-  
-  switch(mvMsg.msgid) {
-
-    // HB_MSG --------------------------------------------
-    case MAVLINK_MSG_ID_HEARTBEAT: {
-      mavlink_msg_heartbeat_decode(&mvMsg, &hb);
-      time_since_last_hb = millis()/1000;
-      //log_d("mavlink_heartbeat_t | System Status: %s | %i", mav_state_to_string(hb.system_status), millis()/1000 );
-      break;
-    }
-
-    // VFR_HUD_MSG ---------------------------------------
-    case MAVLINK_MSG_ID_VFR_HUD: {
-      mavlink_msg_vfr_hud_decode(&mvMsg, &hud);      
-      break;
-    }
-
-    // ATTIUDE_MSG ---------------------------------------- 
-    case MAVLINK_MSG_ID_ATTITUDE: {
-      mavlink_msg_attitude_decode(&mvMsg, &atti);
-      //log_d("mavlink_attitude_t | %.2f \t %.2f \t %.2f", degrees(atti.pitch), degrees(atti.roll), degrees(atti.yaw) );
-      break;
-    }
-
-    default: {}
-    
-  }
-}
-
-
-
-
-//#####################################################################################
-void ESP_GCS_DATALINK::processTCP(void* arg, AsyncClient* client, void *data, size_t len) {
+void ESP_GCS_DATALINK::process_mavlink(void* arg, AsyncClient* client, void *data, size_t len) {
       
   uint8_t* p = (uint8_t*)data;
 
   for(int i=0; i<len; i++) {    
-    if(mavlink_parse_char(MAVLINK_COMM_0, p[i], &msg, &status))
-      processMavlink(msg);
+    if(mavlink_parse_char(MAVLINK_COMM_0, p[i], &msg, &status)) {
+
+      switch(msg.msgid) {
+
+        // HB_MSG --------------------------------------------
+        case MAVLINK_MSG_ID_HEARTBEAT: {
+          mavlink_msg_heartbeat_decode(&msg, &hb);
+          time_since_last_hb = millis()/1000;
+          log_d("mavlink_heartbeat_t | System Status: %s | %i", mav_state_to_string(hb.system_status), millis()/1000 );
+          break;
+        }
+
+        // VFR_HUD_MSG ---------------------------------------
+        case MAVLINK_MSG_ID_VFR_HUD: {
+          mavlink_msg_vfr_hud_decode(&msg, &hud);      
+          break;
+        }
+
+        // ATTIUDE_MSG ---------------------------------------- 
+        case MAVLINK_MSG_ID_ATTITUDE: {
+          mavlink_msg_attitude_decode(&msg, &atti);
+          log_d("mavlink_attitude_t | %.2f \t %.2f \t %.2f", degrees(atti.pitch), degrees(atti.roll), degrees(atti.yaw) );
+          break;
+        }
+
+        default: {}        
+      }
+    
+    }
   }
 }
 
+
+void ESP_GCS_DATALINK::process_sbs1(void* arg, AsyncClient* client, void *data, size_t len) {
+  const char* cp = reinterpret_cast<const char*>(data);
+  std::string s(cp, len);
+  while (!s.empty() && (s.back() == '\n' || s.back() == '\r')) s.pop_back();
+  log_d("sbs1_data | %s", s.c_str());
+}
 
 
 
@@ -119,7 +119,15 @@ void ESP_GCS_DATALINK::init(esp_gcs_config_t* _config) {
     this->reconnect();
   }, nullptr );
 
-  tcp.onData(&ESP_GCS_DATALINK::processTCP, &tcp);  
+  
+  if( _config->protocol == MAVLINK ) {
+    tcp.onData( &ESP_GCS_DATALINK::process_mavlink, &tcp );  
+  }
+  else if( _config->protocol == SBS1 ) {
+    tcp.onData( &ESP_GCS_DATALINK::process_sbs1, &tcp );  
+  }
+  
+  
   tcp.connect(_config->network.ip, _config->network.port);  
   delay(100);
 }

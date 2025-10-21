@@ -18,8 +18,14 @@ enum esp_gcs_touch_t {
 };
 
 
-
 enum esp_gcs_proto_t {
+    MAVLINK,
+    SBS1
+};
+
+
+
+enum esp_gcs_link_t {
     TCP,
     UDP,
     BLUETOOTH,
@@ -30,10 +36,13 @@ enum esp_gcs_proto_t {
 
 struct esp_gcs_config_t {
   
-  esp_gcs_display_t display;
-  uint16_t fb_width, fb_height;
+  struct {
+    esp_gcs_display_t type;
+    uint16_t width, height;
+  } display;
 
-  esp_gcs_proto_t protocol;  
+  esp_gcs_link_t link;
+  esp_gcs_proto_t protocol;
   
   struct {
     const char* ssid;
