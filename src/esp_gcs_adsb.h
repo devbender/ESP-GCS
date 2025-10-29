@@ -14,7 +14,7 @@
 class ESP_GCS_ADSB: public ESP_GCS_SYSTEM {
     
     private:
-        LGFX_Sprite adsb = LGFX_Sprite(&lcd);
+        LGFX_Sprite aircraft = LGFX_Sprite(&lcd);
 
         uint16_t TFT_SKY = 0x02B5;
         uint16_t TFT_GND = 0x5140;
@@ -25,10 +25,9 @@ class ESP_GCS_ADSB: public ESP_GCS_SYSTEM {
         ESP_GCS_ADSB();
         ESP_GCS_ADSB(esp_gcs_config_t* config);
 
-        void init(esp_gcs_config_t* config);
-        void init_base_layer(void);
-        void init_top_layer(void);
-
         void render();
-        void render_top_layer();        
+        void render(LGFX_Sprite*, LGFX_Sprite*);
+        void render_ui_layer(LGFX_Sprite *layer);
+
+        void render_aircraft(void);
 };

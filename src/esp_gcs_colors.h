@@ -8,6 +8,7 @@
 #define COLOR_GND 3
 #define COLOR_YELLOW 4
 #define COLOR_RED 5
+#define COLOR_GREEN 9
 
 #define UI_BACKGROUND_COLOR 6
 #define UI_TOP_BAR_DIV_LINE_COLOR 7

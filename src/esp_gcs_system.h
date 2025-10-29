@@ -20,21 +20,26 @@ class ESP_GCS_SYSTEM {
     private:        
         int mavlink_hb_max_window = 3;
 
+        esp_gcs_touch_t touch = FT6236;
+        esp_gcs_display_t display = PARALLEL_9488;
+
     protected:
         int fb_center_x, fb_center_y;
         uint16_t fb_width, fb_height;
 
-        LGFX_Parallel_9488 lcd;        
+        //LGFX_Parallel_9488 lcd;        
         LGFX_Sprite base_layer = LGFX_Sprite(&lcd);        
         LGFX_Sprite top_layer = LGFX_Sprite(&lcd);
 
     public:
+        LGFX_Parallel_9488 lcd; 
         ESP_GCS_DATALINK datalink;        
 
     public:
         ESP_GCS_SYSTEM();
 
-        void init_fb(esp_gcs_config_t* config);    
+        void init(void);
+        void init_fb(esp_gcs_config_t* config);
         
         void print_banner(void);
         void print_memory_info(void);

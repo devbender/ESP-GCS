@@ -29,13 +29,16 @@ void setup() {
     config.network.port = 30003;
     
     //pfd.init( &config );
-    adsb.init( &config );    
+    //adsb.init( &config );
     //hsi.init( &config );
+
+    adsb.render();
+    adsb.lcd.drawLine(130,100, 135, 80, TFT_GREEN);
 }
 
 void loop() {   
     
-    adsb.render();
+    //adsb.render();
     //hsi.render();
     //pfd.render_all( pfd.datalink.hb, pfd.datalink.atti, pfd.datalink.hud);
 }

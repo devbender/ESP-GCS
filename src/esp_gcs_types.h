@@ -29,6 +29,7 @@ enum esp_gcs_link_t {
     TCP,
     UDP,
     BLUETOOTH,
+    SERIAL_ADSB,
     ESPNOW
 };
 

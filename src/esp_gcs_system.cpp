@@ -58,6 +58,40 @@ void ESP_GCS_SYSTEM::print_partition_info() {
 
 
 
+void ESP_GCS_SYSTEM::init(void) {
+    log_d("System initializing...");
+
+    pinMode(LCD_CS, OUTPUT);
+    pinMode(LCD_BLK, OUTPUT);
+
+    digitalWrite(LCD_CS, LOW);
+    digitalWrite(LCD_BLK, HIGH);
+
+
+    lcd.init();
+    lcd.setRotation(1);        
+    lcd.fillScreen(TFT_BLACK);
+    lcd.setPivot( lcd.width()/2, lcd.height()/2 );
+
+    fb_width = 480; fb_height = 320;
+
+    // layer 0 ------------------------------------------------------------------------
+    base_layer.setColorDepth(4);    
+    base_layer.createSprite(fb_width, fb_height);
+    set_palette_4bit(&base_layer);
+    base_layer.fillSprite(COLOR_TRANSPARENT);    
+
+
+    // top layer ----------------------------------------------------------------------    
+    top_layer.setColorDepth(4);
+    top_layer.createSprite(fb_width, fb_height);
+    set_palette_4bit(&top_layer);
+    top_layer.fillSprite(COLOR_TRANSPARENT);
+}   
+
+
+
+
 void ESP_GCS_SYSTEM::init_fb(esp_gcs_config_t* config) {
 
 
@@ -113,11 +147,8 @@ void ESP_GCS_SYSTEM::init_fb(esp_gcs_config_t* config) {
     set_palette_4bit(&top_layer);
     top_layer.fillSprite(TFT_TRANSPARENT);
 
-
-
     print_banner();
-    print_memory_info();
-    
+    print_memory_info();    
     print_partition_info();        
 }
 
@@ -162,7 +193,7 @@ void ESP_GCS_SYSTEM::set_palette_4bit(LGFX_Sprite *layer) {
     layer->setPaletteColor(UI_TOP_BAR_DIV_LINE_COLOR,   RGB( 150, 150, 150 ) );
     layer->setPaletteColor(UI_OUTER_CIRCLE_COLOR,       RGB( 150, 150, 150 ) );
     
-    layer->setPaletteColor(9, TFT_BLACK);
+    layer->setPaletteColor(COLOR_GREEN, TFT_GREEN);
     layer->setPaletteColor(10, TFT_BLACK);
     layer->setPaletteColor(11, TFT_BLACK);
     layer->setPaletteColor(12, TFT_BLACK);
