@@ -1,5 +1,8 @@
 #include "esp_gcs_hsi.h"
 
+#define base_layer fb_0
+#define top_layer fb_1
+
 ESP_GCS_HSI::ESP_GCS_HSI() { }
 
 ESP_GCS_HSI::ESP_GCS_HSI(esp_gcs_config_t* config) {

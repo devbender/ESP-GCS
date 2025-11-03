@@ -1,5 +1,8 @@
 #include "esp_gcs_pfd.h"
 
+#define base_layer fb_0
+#define top_layer fb_1
+
                         
 ESP_GCS_PFD::ESP_GCS_PFD() {};
 

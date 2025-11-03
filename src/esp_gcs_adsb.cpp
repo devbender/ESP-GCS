@@ -3,51 +3,38 @@
 
 
 ESP_GCS_ADSB::ESP_GCS_ADSB() { 
-  init();
-  render_aircraft();
-  render_ui_layer(&top_layer);
+  init();  
+  render_ui_layer(&fb_1);
 
-  top_layer.pushRotateZoom(&base_layer, 0, 1.0,1.0);
+  render_aircraft(COLOR_RED);
+  aircraft.pushRotateZoom(&fb_1, fb_1.width()/2, fb_1.height()/2, 0, 1.0, 1.0);
+
   
-  //aircraft.pushRotateZoom(&base_layer, 0, 1.0, 1.0);
-  //aircraft.pushSprite(&base_layer, 100, 100);
-  //lcd.drawLine(130,100, 135, 80, COLOR_GREEN);
-  aircraft.pushRotateZoom(&base_layer, 130, 100, 0, 1.0, 1.0);
+  render_aircraft(COLOR_WHITE);  
+  fb_1.pushRotateZoom(&fb_0, 0, 1.0,1.0);
+  aircraft.pushRotateZoom(&fb_0, 130, 100, 0, 1.0, 1.0);
 
   log_d("ADS-B Free RAM: %.2f KB\n", ESP.getFreeHeap() / 1024.0);
 }
 
+void ESP_GCS_ADSB::render_aircraft(uint16_t color) {
+  cfg_sp(&aircraft, AIRCRAFT_SIZE*2, AIRCRAFT_SIZE*2);
 
-void ESP_GCS_ADSB::render_aircraft() {
+  aircraft.fillTriangle(0, AIRCRAFT_SIZE*2-1,
+                        AIRCRAFT_SIZE, 0,
+                        AIRCRAFT_SIZE*2-1, AIRCRAFT_SIZE*2-1,
+                        color);
 
-  aircraft.setColorDepth(4);
-  aircraft.createSprite(AIRCRAFT_SIZE*2, AIRCRAFT_SIZE*2);  
-  set_palette_4bit(&aircraft);  
-  aircraft.fillSprite(COLOR_TRANSPARENT);
-
-  int center = AIRCRAFT_SIZE + 2;
-  
-
-  aircraft.drawLine(0, AIRCRAFT_SIZE*2, 
-                    AIRCRAFT_SIZE, 0,
-                    COLOR_WHITE);
-  
-  
-  aircraft.drawLine(AIRCRAFT_SIZE,0, 
-                    AIRCRAFT_SIZE*2, AIRCRAFT_SIZE*2,
-                    COLOR_WHITE);		
-  
-  
-  aircraft.drawLine(AIRCRAFT_SIZE*2, AIRCRAFT_SIZE*2,
-                    AIRCRAFT_SIZE, center,
-                    COLOR_WHITE);
-  
-  
-  aircraft.drawLine(AIRCRAFT_SIZE, center,
-                    0, AIRCRAFT_SIZE*2,
-                    COLOR_WHITE);
+  aircraft.fillTriangle(AIRCRAFT_SIZE, AIRCRAFT_SIZE*2-3,
+                        AIRCRAFT_SIZE-4, AIRCRAFT_SIZE*2-1,
+                        AIRCRAFT_SIZE+4, AIRCRAFT_SIZE*2-1,
+                        COLOR_TRANSPARENT);
 }
 
+void test() {
+
+
+}
 
 
 void ESP_GCS_ADSB::render_ui_layer(LGFX_Sprite *layer) {
@@ -85,30 +72,29 @@ void ESP_GCS_ADSB::render_ui_layer(LGFX_Sprite *layer) {
 		layer->drawPixel(TFT_X_CENTER + cos(a)*ri, TFT_Y_CENTER + sin(a)*ri, COLOR_RED); //UI_INNER_CIRCLE_COLOR);
   }
   
-  layer->drawLine(TFT_X_CENTER-AIRCRAFT_SIZE,	TFT_Y_CENTER+AIRCRAFT_SIZE, 
-                  TFT_X_CENTER,				        TFT_Y_CENTER-AIRCRAFT_SIZE, 
-                  UI_MY_AIRCRAFT_COLOR);
+  // layer->drawLine(TFT_X_CENTER-AIRCRAFT_SIZE,	TFT_Y_CENTER+AIRCRAFT_SIZE, 
+  //                 TFT_X_CENTER,				        TFT_Y_CENTER-AIRCRAFT_SIZE, 
+  //                 UI_MY_AIRCRAFT_COLOR);
   
   
-  layer->drawLine(TFT_X_CENTER,               TFT_Y_CENTER-AIRCRAFT_SIZE, 
-                  TFT_X_CENTER+AIRCRAFT_SIZE,	TFT_Y_CENTER+AIRCRAFT_SIZE, 
-                  UI_MY_AIRCRAFT_COLOR);		
+  // layer->drawLine(TFT_X_CENTER,               TFT_Y_CENTER-AIRCRAFT_SIZE, 
+  //                 TFT_X_CENTER+AIRCRAFT_SIZE,	TFT_Y_CENTER+AIRCRAFT_SIZE, 
+  //                 UI_MY_AIRCRAFT_COLOR);		
   
   
-  layer->drawLine(TFT_X_CENTER-AIRCRAFT_SIZE,	TFT_Y_CENTER+AIRCRAFT_SIZE, 
-                  TFT_X_CENTER,				        TFT_Y_CENTER+3, 			      
-                  UI_MY_AIRCRAFT_COLOR);
+  // layer->drawLine(TFT_X_CENTER-AIRCRAFT_SIZE,	TFT_Y_CENTER+AIRCRAFT_SIZE, 
+  //                 TFT_X_CENTER,				        TFT_Y_CENTER+3, 			      
+  //                 UI_MY_AIRCRAFT_COLOR);
   
   
-  layer->drawLine(TFT_X_CENTER+AIRCRAFT_SIZE,	TFT_Y_CENTER+AIRCRAFT_SIZE, 
-                  TFT_X_CENTER,				        TFT_Y_CENTER+3, 			      
-                  UI_MY_AIRCRAFT_COLOR);
+  // layer->drawLine(TFT_X_CENTER+AIRCRAFT_SIZE,	TFT_Y_CENTER+AIRCRAFT_SIZE, 
+  //                 TFT_X_CENTER,				        TFT_Y_CENTER+3, 			      
+  //                 UI_MY_AIRCRAFT_COLOR);
     
 }
 
 
 
-void ESP_GCS_ADSB::render() {
-    base_layer.pushSprite(0, 0);
-    //top_layer.pushSprite(0, 0);
+void ESP_GCS_ADSB::render_fb() {
+    fb_0.pushSprite(0, 0);
 }

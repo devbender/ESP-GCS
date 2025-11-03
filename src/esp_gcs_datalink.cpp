@@ -1,5 +1,6 @@
 #include "esp_gcs_datalink.h"
 
+
 //#####################################################################################
 
 uint32_t ESP_GCS_DATALINK::time_since_last_hb = 0;
@@ -14,6 +15,8 @@ mavlink_attitude_t ESP_GCS_DATALINK::atti;
 
 AsyncClient ESP_GCS_DATALINK::tcp;
 
+adsb_context ESP_GCS_DATALINK::m_adsb_ctx;
+std::string ESP_GCS_DATALINK::m_tcp_rx_buffer;
 
 
 //#####################################################################################
@@ -82,6 +85,71 @@ void ESP_GCS_DATALINK::process_sbs1(void* arg, AsyncClient* client, void *data, 
 }
 
 
+void ESP_GCS_DATALINK::process_raw(void* arg, AsyncClient* client, void *data, size_t len) {
+  
+  // 1. Append the new data to our persistent member buffer
+  const char* cp = reinterpret_cast<const char*>(data);
+  m_tcp_rx_buffer.append(cp, len);
+
+  // 2. Get the current time ONCE.
+  // This is the correct way to call your V5 decoder.
+  float current_time = millis() / 1000.0f;
+
+  // 3. Process every complete message in the buffer
+  while (true) {
+    
+    // Find the start of a message
+    size_t start = m_tcp_rx_buffer.find('*');
+    if (start == std::string::npos) {
+      // No start marker found. The buffer might just be junk.
+      // To prevent infinite buffer growth, we can clear it if it's junk
+      // and getting too big.
+      if (m_tcp_rx_buffer.length() > 2048) {
+          m_tcp_rx_buffer.clear();
+      }
+      break; // Exit loop, wait for more data
+    }
+
+    // Find the end of the message *after* the start
+    size_t end = m_tcp_rx_buffer.find(';', start);
+    if (end == std::string::npos) {
+      // We found a '*' but no ';'. This is a partial message.
+      // We must wait for the rest of it.
+      
+      // Optimization: If there was junk *before* the partial message,
+      // (e.g., "abc*123"), we can erase the "abc".
+      if (start > 0) {
+          m_tcp_rx_buffer.erase(0, start);
+      }
+      break; // Exit loop, wait for more data
+    }
+
+    // ---
+    // If we are here, we have a complete message from 'start' to 'end'
+    // ---
+    
+    // 4. Extract the message. This does one small allocation,
+    // which is acceptable in the network handler.
+    std::string msg = m_tcp_rx_buffer.substr(start, end - start + 1);
+
+    // 5. Call your 10/10 decoder with the context, message, and time
+    adsb_decode_message(m_adsb_ctx, msg.c_str(), current_time);
+
+    //log_d("adsb_raw_data: %s | time: %f", msg.c_str(), current_time);
+
+    // 6. Erase the processed message (and any junk before it)
+    // from the buffer, so we can look for the next one.
+    m_tcp_rx_buffer.erase(0, end + 1);
+  }
+}
+
+
+void ESP_GCS_DATALINK::set_adsb_local_reference(double lat, double lon) {
+  // Call the global 'inline' function from esp_gcs_adsb_decoder.h
+  // and pass it our private static context
+  adsb_set_local_reference(m_adsb_ctx, lat, lon);
+  log_i("ADSB local reference set to: %.6f, %.6f", lat, lon);
+}
 
 
 //#####################################################################################
@@ -100,7 +168,7 @@ void ESP_GCS_DATALINK::init(esp_gcs_config_t* _config) {
     return;  
   }
   
-  log_d("wifi connected!  IP: %s", WiFi.localIP().toString().c_str());
+  log_i("WIFI connected IP: %s", WiFi.localIP().toString().c_str());
   delay(100); 
 
 
@@ -120,11 +188,19 @@ void ESP_GCS_DATALINK::init(esp_gcs_config_t* _config) {
   }, nullptr );
 
   
-  if( _config->protocol == MAVLINK ) {
-    tcp.onData( &ESP_GCS_DATALINK::process_mavlink, &tcp );  
+  if( _config->protocol == ADSB_MAVLINK ) {
+    tcp.onData( &ESP_GCS_DATALINK::process_mavlink, &tcp );
+    log_d("ADSB_MAVLINK protocol selected");
   }
-  else if( _config->protocol == SBS1 ) {
-    tcp.onData( &ESP_GCS_DATALINK::process_sbs1, &tcp );  
+  
+  else if( _config->protocol == ADSB_SBS1 ) {
+    tcp.onData( &ESP_GCS_DATALINK::process_sbs1, &tcp );
+    log_d("ADSB_SBS1 protocol selected");
+  }
+
+  else if( _config->protocol == ADSB_RAW ) {
+    tcp.onData( &ESP_GCS_DATALINK::process_raw, &tcp );
+    log_d("ADSB_RAW protocol selected");
   }
   
   

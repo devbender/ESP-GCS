@@ -3,10 +3,6 @@
 #define LGFX_USE_V1
 #include <LovyanGFX.hpp>
 
-#include <esp_spi_flash.h> // For flash size
-#include <esp_heap_caps.h> // For PSRAM size
-#include <esp_partition.h> // for partitions
-
 #include "esp_gcs_colors.h"
 #include "my_esp_gcs_config.h"
 #include "esp_gcs_datalink.h"
@@ -23,16 +19,16 @@ class ESP_GCS_SYSTEM {
         esp_gcs_touch_t touch = FT6236;
         esp_gcs_display_t display = PARALLEL_9488;
 
-    protected:
+    public:
+        LGFX_Parallel_9488 lcd;     
         int fb_center_x, fb_center_y;
         uint16_t fb_width, fb_height;
-
-        //LGFX_Parallel_9488 lcd;        
-        LGFX_Sprite base_layer = LGFX_Sprite(&lcd);        
-        LGFX_Sprite top_layer = LGFX_Sprite(&lcd);
+        
+        LGFX_Sprite fb_0 = LGFX_Sprite(&lcd);
+        LGFX_Sprite fb_1 = LGFX_Sprite(&lcd);
 
     public:
-        LGFX_Parallel_9488 lcd; 
+        
         ESP_GCS_DATALINK datalink;        
 
     public:
@@ -40,6 +36,7 @@ class ESP_GCS_SYSTEM {
 
         void init(void);
         void init_fb(esp_gcs_config_t* config);
+        void cfg_sp(LGFX_Sprite*, int, int);
         
         void print_banner(void);
         void print_memory_info(void);

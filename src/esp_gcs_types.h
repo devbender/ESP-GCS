@@ -19,8 +19,9 @@ enum esp_gcs_touch_t {
 
 
 enum esp_gcs_proto_t {
-    MAVLINK,
-    SBS1
+    ADSB_MAVLINK,
+    ADSB_SBS1,
+    ADSB_RAW
 };
 
 
@@ -55,6 +56,20 @@ struct esp_gcs_config_t {
   } network;
   
 };
+
+
+
+// struct adsb_data {
+//   int32_t alt;         // altitude (ft)
+//   float lat, lon;      // degrees
+//   float heading;       // degrees, 0–359
+//   float speed;         // knots
+//   int32_t v_speed;     // vertical speed (ft/min)
+//   float last_seen;     // seconds since boot or last update
+//   bool valid_pos;      // true if lat/lon valid
+//   bool valid_vel;      // true if speed/heading valid
+// };
+
 
 
 
@@ -104,7 +119,7 @@ const fmode_t flightModes[] = {
 
 
 enum filter_t {
-  RAW,
+  NO_FILTER,
   MEDIAN,
   M_AVERAGE,
   W_AVERAGE,  

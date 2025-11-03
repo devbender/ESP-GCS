@@ -1,0 +1,161 @@
+
+void ESP_GCS_SYSTEM::init_fb(esp_gcs_config_t* config) {
+
+
+    if(config->display.type == PARALLEL_9488) {
+        // Pin init
+        pinMode(LCD_CS, OUTPUT);
+        pinMode(LCD_BLK, OUTPUT);
+
+        digitalWrite(LCD_CS, LOW);
+        digitalWrite(LCD_BLK, HIGH);
+    }
+
+    else if(config->display.type == SPI_9342) { 
+        //TODO: implement
+    }
+
+    else {}
+
+    lcd.init();
+    lcd.setRotation(1);        
+    lcd.fillScreen(TFT_BLACK);
+    lcd.setPivot( lcd.width()/2, lcd.height()/2 );
+
+    fb_width = config->display.width;
+    fb_height = config->display.height;
+
+    // layer 0 ------------------------------------------------------------------------
+    fb_0.setColorDepth(4);    
+    fb_0.createSprite(config->display.width, config->display.height);    
+    set_palette_4bit(&fb_0);    
+    fb_0.fillSprite(COLOR_BLACK); //base_layer.fillSprite(COLOR_TRANSPARENT);
+
+    fb_0.setTextSize(2);
+    fb_0.setTextColor(COLOR_WHITE);
+    fb_0.drawCenterString("INITIALIZING...", fb_0.width()/2, fb_0.height()/2);    
+
+    fb_center_x = ( lcd.width() - fb_0.width() )/2;
+    fb_center_y = ( lcd.height() - fb_0.height() )/2;
+
+    fb_0.pushSprite(fb_center_x, fb_center_y);
+      
+}
+
+
+
+#include <esp_spi_flash.h> // For flash size
+#include <esp_heap_caps.h> // For PSRAM size
+#include <esp_partition.h> // for partitions
+
+
+void print_memory_info() {
+    
+    // Get total and available flash size in MB
+    uint32_t flash_size = spi_flash_get_chip_size() / (1024 * 1024);
+    log_d("Total Flash Size: %d MB", flash_size);
+
+    // PSRAM info (ESP32 with PSRAM enabled)
+    size_t psram_free = heap_caps_get_free_size(MALLOC_CAP_SPIRAM);
+    size_t psram_total = heap_caps_get_total_size(MALLOC_CAP_SPIRAM);
+
+    log_d("Free RAM: %.2f KB", ESP.getFreeHeap() / 1024.0);
+    log_d("Total PSRAM Size: %.2f MB", psram_total / (1024.0 * 1024));
+    log_d("Free PSRAM: %.2f MB", psram_free / (1024.0 * 1024));    
+}
+
+
+
+
+void print_banner() {
+    delay(2000);
+    log_d("#####################################################");
+    log_d("#                    ESP-GCS                        #");
+    log_d("#####################################################");
+}
+
+
+
+void ESP_GCS_SYSTEM::print_partition_info() {
+    log_d("ESP32 Partition Information:");
+    log_d("------------------------------------------------------");
+    log_d("%-10s %-8s %-10s %-10s %-10s", "Name", "Type", "SubType", "Offset", "Size");
+
+    const esp_partition_t* part = NULL;
+    esp_partition_iterator_t it = esp_partition_find(ESP_PARTITION_TYPE_ANY, ESP_PARTITION_SUBTYPE_ANY, NULL);
+
+    while (it != NULL) {
+        part = esp_partition_get(it);
+        log_d("%-10s 0x%-6x 0x%-8x 0x%-8x %u KB",
+              part->label,
+              part->type,
+              part->subtype,
+              part->address,
+              part->size / 1024); // Size in KB
+        it = esp_partition_next(it);
+    }
+
+    esp_partition_iterator_release(it);
+
+    log_d("------------------------------------------------------");
+    log_d("Done!");
+}
+
+
+
+
+
+
+ESP_GCS_ADSB::ESP_GCS_ADSB() { 
+  init();  
+  render_ui_layer(&fb_1);
+
+  render_aircraft(COLOR_RED);
+  aircraft.pushRotateZoom(&fb_1, fb_1.width()/2, fb_1.height()/2, 0, 1.0, 1.0);
+
+  
+  render_aircraft(COLOR_WHITE);
+  aircraft.pushRotateZoom(&fb_1, 130, 100, 0, 1.0, 1.0);
+  aircraft.pushRotateZoom(&fb_1, 130, 130, 45, 1.0, 1.0);
+  aircraft.pushRotateZoom(&fb_1, 130, 160, 90, 1.0, 1.0);
+  aircraft.pushRotateZoom(&fb_1, 130, 190, 90+45, 1.0, 1.0);
+
+  fb_1.pushRotateZoom(&fb_0, 0, 1.0,1.0);
+
+  log_d("ADS-B Free RAM: %.2f KB\n", ESP.getFreeHeap() / 1024.0);
+}
+
+void ESP_GCS_ADSB::render_aircraft(uint16_t color) {
+  cfg_sp(&aircraft, AIRCRAFT_SIZE*2, AIRCRAFT_SIZE*2);
+
+  aircraft.fillTriangle(0, AIRCRAFT_SIZE*2-1,
+                        AIRCRAFT_SIZE, 0,
+                        AIRCRAFT_SIZE*2-1, AIRCRAFT_SIZE*2-1,
+                        color);
+
+  aircraft.fillTriangle(AIRCRAFT_SIZE, AIRCRAFT_SIZE*2-3,
+                        AIRCRAFT_SIZE-4, AIRCRAFT_SIZE*2-1,
+                        AIRCRAFT_SIZE+4, AIRCRAFT_SIZE*2-1,
+                        COLOR_TRANSPARENT);
+}
+
+
+
+    //pfd.init( &config );
+    //adsb.init( &config );
+    //hsi.init( &config );
+
+
+
+
+    //adsb.render();
+    //hsi.render();
+    //pfd.render_all( pfd.datalink.hb, pfd.datalink.atti, pfd.datalink.hud);
+
+    // adsb.fb_1.pushRotateZoom(&adsb.fb_0, 0, 1.0,1.0);
+    
+    // angle += 5;
+    // if (angle >= 360) angle = 0;
+    // adsb.aircraft.pushRotateZoom(&adsb.fb_0, 130, 100, angle, 1.0, 1.0);
+    // adsb.render_fb();
+    // delay(50);
