@@ -10,6 +10,23 @@
 #include "esp_gcs_display_spi_9342.h"
 
 
+#define EVENT_TASK_STACK_SIZE	1024*8
+#define TOUCH_TASK_STACK_SIZE	1024*8
+
+#define OVERLAY_TASK_STACK_SIZE	1024*8
+#define INIT_TASK_STACK_SIZE	1024*8
+#define BATTERY_TASK_STACK_SIZE	1024*2
+
+
+#define INIT_TASK_PRIORITY	    (configMAX_PRIORITIES - 1)  // HIGH
+#define TOUCH_TASK_PRIORITY	    (configMAX_PRIORITIES - 1)  // HIGH
+#define EVENT_TASK_PRIORITY	    (configMAX_PRIORITIES - 5)  // MID-HIGH
+#define OVERLAY_TASK_PRIORITY	(tskIDLE_PRIORITY + 5)		// LOW
+
+
+
+
+
 
 class ESP_GCS_SYSTEM {
 
@@ -26,6 +43,8 @@ class ESP_GCS_SYSTEM {
         
         LGFX_Sprite fb_0 = LGFX_Sprite(&lcd);
         LGFX_Sprite fb_1 = LGFX_Sprite(&lcd);
+
+        TaskHandle_t xHandleEventsTask = NULL;
 
     public:
         
@@ -44,5 +63,9 @@ class ESP_GCS_SYSTEM {
 
         void set_palette_4bit(LGFX_Sprite *sp);
 
-        void run();    
+        void run();
+
+        void push_fb();
+
+        static void task_system_events(void *pvParameters);
 };

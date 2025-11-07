@@ -22,11 +22,7 @@ class ESP_GCS_ADSB: public ESP_GCS_SYSTEM {
         ESP_GCS_ADSB();
         ESP_GCS_ADSB(esp_gcs_config_t* config);
 
-        void render_fb();
-        void render(LGFX_Sprite*, LGFX_Sprite*);
         void render_ui_layer(LGFX_Sprite *layer);
-
         void render_aircraft(uint16_t color=COLOR_WHITE);
 
-        void test();
 };

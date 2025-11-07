@@ -84,24 +84,24 @@ static const uint32_t CRC24_POLY = 0x1864CFBu;
 // This is the corrected CRC-24 implementation.
 // It shifts *first*, then checks the bit that "fell off" (bit 24),
 // and then XORs with the 25-bit generator polynomial.
-// static inline uint32_t crc24_fast(const uint8_t* msg, size_t len) {
-//   uint32_t crc = 0;
-//   for (size_t i = 0; i < len; ++i) {
-//     crc ^= ((uint32_t)msg[i]) << 16;
-//     for (int j = 0; j < 8; ++j) {
-//       // Shift left by 1
-//       crc <<= 1;
+static inline uint32_t crc24_fast(const uint8_t* msg, size_t len) {
+  uint32_t crc = 0;
+  for (size_t i = 0; i < len; ++i) {
+    crc ^= ((uint32_t)msg[i]) << 16;
+    for (int j = 0; j < 8; ++j) {
+      // Shift left by 1
+      crc <<= 1;
       
-//       // Check if bit 24 (the one that just "fell off" the 24-bit register) is 1
-//       if (crc & 0x1000000) {
-//         // If it was, XOR with the 25-bit generator.
-//         // This clears bit 24 and applies the polynomial.
-//         crc ^= CRC_POLY;
-//       }
-//     }
-//   }
-//   return crc & 0xFFFFFF; // Mask to final 24 bits
-// }
+      // Check if bit 24 (the one that just "fell off" the 24-bit register) is 1
+      if (crc & 0x1000000) {
+        // If it was, XOR with the 25-bit generator.
+        // This clears bit 24 and applies the polynomial.
+        crc ^= CRC24_POLY;
+      }
+    }
+  }
+  return crc & 0xFFFFFF; // Mask to final 24 bits
+}
 
 // Alternative CRC-24 implementation (original, for reference)
 // CRC-24 (Mode-S) MSB-first implementation

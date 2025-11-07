@@ -214,3 +214,58 @@ void ESP_GCS_DATALINK::reconnect(){
   tcp.connect(config.network.ip, config.network.port);
 
 }
+
+
+
+
+
+
+
+//#####################################################################################
+void ESP_GCS_DATALINK::print_aircrafts() {
+
+  uint32_t current_time_ms = millis();
+  float current_time_sec = current_time_ms / 1000.0f;
+
+  // Get a read-only reference to the ADS-B context
+  const adsb_context& ctx = ESP_GCS_DATALINK::get_adsb_context();
+
+  int active_aircraft = 0;
+
+  // ---Loop through the aircraft array ---
+  // (ADSB_MAX_AIRCRAFT is defined in esp_gcs_adsb_decoder.h)
+  for (int i = 0; i < ADSB_MAX_AIRCRAFT; ++i) {
+      
+      // Get a reference to the aircraft data
+      const adsb_data& ac = ctx.aircraft[i];
+
+      // icao == 0 slot empty, so we skip it
+      if (ac.icao != 0) {
+
+          active_aircraft++;
+          
+          // --- 5. Print all available data in a formatted string ---
+          char buffer[256];
+          snprintf(buffer, sizeof(buffer),
+              " > ICAO: %06X | CS: %-8s | ALT: %5ld ft | SPD: %3.0f kt | HDG: %3.0f | POS: %7.4f, %7.4f | SEEN: %.0fs ago",
+              ac.icao,
+              ac.valid_callsign ? ac.callsign : "----",
+              (ac.alt == INT32_MIN) ? 0 : ac.alt, // Show 0 for invalid Gillham
+              ac.valid_vel ? ac.speed : 0.0f,
+              ac.valid_vel ? ac.heading : 0.0f,
+              ac.valid_pos ? ac.lat : 0.0f,
+              ac.valid_pos ? ac.lon : 0.0f,
+              current_time_sec - ac.last_seen
+          );
+          // Use log_d, which is a printf-style function, so we pass the buffer as a string format
+          log_i("%s", buffer);                
+      }
+  }
+  log_i("----------------------------------------------------------------------------------------------------------------");
+
+  if (active_aircraft == 0) {
+      log_d("  No active aircraft found.");
+  }
+
+
+}

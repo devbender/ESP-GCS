@@ -69,32 +69,8 @@ void ESP_GCS_ADSB::render_ui_layer(LGFX_Sprite *layer) {
 	// Draw inner circle
 	for (int i = 0; i<360; i += degMark) {			
 		float a = radians(i);
-		layer->drawPixel(TFT_X_CENTER + cos(a)*ri, TFT_Y_CENTER + sin(a)*ri, COLOR_RED); //UI_INNER_CIRCLE_COLOR);
+		layer->drawPixel(TFT_X_CENTER + cos(a)*ri, TFT_Y_CENTER + sin(a)*ri, COLOR_WHITE); //UI_INNER_CIRCLE_COLOR);
   }
   
-  // layer->drawLine(TFT_X_CENTER-AIRCRAFT_SIZE,	TFT_Y_CENTER+AIRCRAFT_SIZE, 
-  //                 TFT_X_CENTER,				        TFT_Y_CENTER-AIRCRAFT_SIZE, 
-  //                 UI_MY_AIRCRAFT_COLOR);
-  
-  
-  // layer->drawLine(TFT_X_CENTER,               TFT_Y_CENTER-AIRCRAFT_SIZE, 
-  //                 TFT_X_CENTER+AIRCRAFT_SIZE,	TFT_Y_CENTER+AIRCRAFT_SIZE, 
-  //                 UI_MY_AIRCRAFT_COLOR);		
-  
-  
-  // layer->drawLine(TFT_X_CENTER-AIRCRAFT_SIZE,	TFT_Y_CENTER+AIRCRAFT_SIZE, 
-  //                 TFT_X_CENTER,				        TFT_Y_CENTER+3, 			      
-  //                 UI_MY_AIRCRAFT_COLOR);
-  
-  
-  // layer->drawLine(TFT_X_CENTER+AIRCRAFT_SIZE,	TFT_Y_CENTER+AIRCRAFT_SIZE, 
-  //                 TFT_X_CENTER,				        TFT_Y_CENTER+3, 			      
-  //                 UI_MY_AIRCRAFT_COLOR);
     
-}
-
-
-
-void ESP_GCS_ADSB::render_fb() {
-    fb_0.pushSprite(0, 0);
 }

@@ -27,11 +27,11 @@ void ESP_GCS_SYSTEM::init(void) {
 
 
 
-void ESP_GCS_SYSTEM::cfg_sp(LGFX_Sprite *fb, int width, int height) {
-    fb->setColorDepth(4);    
-    fb->createSprite(width, height);
-    set_palette_4bit(fb);
-    fb->fillSprite(COLOR_TRANSPARENT);
+void ESP_GCS_SYSTEM::cfg_sp(LGFX_Sprite *sp, int width, int height) {
+    sp->setColorDepth(4);    
+    sp->createSprite(width, height);
+    set_palette_4bit(sp);
+    sp->fillSprite(COLOR_TRANSPARENT);
 }
 
 
@@ -64,4 +64,10 @@ void ESP_GCS_SYSTEM::set_palette_4bit(LGFX_Sprite *layer) {
     layer->setPaletteColor(14, TFT_BLACK);
     
     layer->setPaletteColor(COLOR_TRANSPARENT, TFT_TRANSPARENT);
+}
+
+
+
+void ESP_GCS_SYSTEM::push_fb(){
+    fb_0.pushSprite(0, 0);
 }

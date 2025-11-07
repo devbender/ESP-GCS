@@ -45,6 +45,7 @@ public:
   }
 
   static void set_adsb_local_reference(double lat, double lon);
+  static void print_aircrafts();
 
 private:  
   static const char* mav_state_to_string(int state);  

@@ -159,3 +159,9 @@ void ESP_GCS_ADSB::render_aircraft(uint16_t color) {
     // adsb.aircraft.pushRotateZoom(&adsb.fb_0, 130, 100, angle, 1.0, 1.0);
     // adsb.render_fb();
     // delay(50);
+
+
+
+
+
+    

@@ -20,7 +20,12 @@ float angle = 0;
 uint32_t last_print_time = 0;
 const uint32_t PRINT_INTERVAL_MS = 5000; // 10 seconds
 
+static void task_print_info(void *pvParameters);
+static void task_events(void *pvParameters);
 
+// #############################################################################################################
+// SETUP
+// #############################################################################################################
 void setup() {
     config.display.type = PARALLEL_9488;
     config.display.width = 480;
@@ -36,73 +41,67 @@ void setup() {
     config.network.port = 30002;
 
     datalink.init( &config );
-    datalink.set_adsb_local_reference(18.4650, -69.9428);
-    adsb.render_fb();
+    datalink.set_adsb_local_reference(18.4650, -69.9428); // for local CPR
+    adsb.push_fb();
+
+
+    xTaskCreate(task_events, "EVENT_TSK", EVENT_TASK_STACK_SIZE, NULL, EVENT_TASK_PRIORITY, &adsb.xHandleEventsTask);
+    //xTaskCreate(task_print_info, "PRINT_INFO_TSK", 1024, NULL, 10, NULL);
 }
     
 
+
+// #############################################################################################################
+// LOOP
+// #############################################################################################################
 void loop() {
   
-    uint32_t current_time_ms = millis();
+    datalink.print_aircrafts();
+    delay(5000);
+}
 
-    // --- 3. Non-blocking 10-second timer ---
-    if (current_time_ms - last_print_time >= PRINT_INTERVAL_MS) {
-        last_print_time = current_time_ms;
 
-        //log_d("\n--- AIRCRAFT DATABASE (Updated every 10s at %lus) ---", current_time_ms / 1000);
 
-        // Get a read-only reference to the ADS-B context
-        const adsb_context& ctx = ESP_GCS_DATALINK::get_adsb_context();
 
-        int active_aircraft = 0;
-        float current_time_sec = current_time_ms / 1000.0f;
+// #############################################################################################################
+// EVENT TASK
+// #############################################################################################################
+static void task_events(void *pvParameters) {
+    log_d("EVENT TASK STARTED");
+    
+    for(;;) {
+        log_d("EVENT TASK RUNNING");        
 
-        // --- 4. Loop through the aircraft array ---
-        // (ADSB_MAX_AIRCRAFT is defined in esp_gcs_adsb_decoder.h)
-        for (int i = 0; i < ADSB_MAX_AIRCRAFT; ++i) {
+        adsb.fb_1.pushRotateZoom(&adsb.fb_0, 0, 1.0,1.0);
+        angle += 5;
+        if (angle >= 360) angle = 0;
+        adsb.aircraft.pushRotateZoom(&adsb.fb_0, 130, 100, angle, 1.0, 1.0);
 
-            //log_d("%i: %i%", i, ctx.aircraft[i].icao);
-            
-            // Get a reference to the aircraft data
-            const adsb_data& ac = ctx.aircraft[i];
+        adsb.push_fb();
 
-            // icao == 0 means the slot is empty, so we skip it
-            if (ac.icao != 0) {
-            //if(ac.valid_callsign == true){
-            
-                // Optional: Check if the aircraft is stale before printing
-                // (The decoder prunes every 100 messages, but this filters
-                // aircraft that haven't been seen in 60s)
-                if ((current_time_sec - ac.last_seen) > ADSB_STALE_TIMEOUT_SEC) {
-                    continue;
-                }
-
-                active_aircraft++;
-                
-                // --- 5. Print all available data in a formatted string ---
-                char buffer[256];
-                snprintf(buffer, sizeof(buffer),
-                    " > ICAO: %06X | CS: %-8s | ALT: %5ld ft | SPD: %3.0f kt | HDG: %3.0f | POS: %7.4f, %7.4f | SEEN: %.0fs ago",
-                    ac.icao,
-                    ac.valid_callsign ? ac.callsign : "----",
-                    (ac.alt == INT32_MIN) ? 0 : ac.alt, // Show 0 for invalid Gillham
-                    ac.valid_vel ? ac.speed : 0.0f,
-                    ac.valid_vel ? ac.heading : 0.0f,
-                    ac.valid_pos ? ac.lat : 0.0f,
-                    ac.valid_pos ? ac.lon : 0.0f,
-                    current_time_sec - ac.last_seen
-                );
-                // Use log_d, which is a printf-style function, so we pass the buffer as a string format
-                log_i("%s", buffer);                
-            }
-        }
-        log_i("----------------------------------------------------------------------------------------------------------------");
-        
-        if (active_aircraft == 0) {
-            log_d("  No active aircraft found.");
-        }
-        
+        // Yield to other tasks
+		vTaskDelay(100 / portTICK_PERIOD_MS);
     }
+}
 
 
+
+
+
+
+// #############################################################################################################
+// EVENT TASK
+// #############################################################################################################
+static void task_print_info(void *pvParameters) {    
+    log_d("DISPLAY INFO TASK STARTED");
+    
+    for(;;) {
+        log_d("DISPLAY INFO TASK RUNNING");
+
+
+        log_i("Free RAM: %.2f KB\n", ESP.getFreeHeap() / 1024.0);
+
+        // Yield to other tasks
+        vTaskDelay(5000 / portTICK_PERIOD_MS);
+    }
 }
