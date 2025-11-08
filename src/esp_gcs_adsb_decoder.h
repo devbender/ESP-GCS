@@ -64,7 +64,11 @@ struct adsb_data {
 };
 
 struct adsb_context {
-  adsb_data aircraft[ADSB_MAX_AIRCRAFT];
+  adsb_data aircraft[ADSB_MAX_AIRCRAFT]; // o(n) lookup
+  
+  // for optional consideration later - O(1) average lookup by ICAO
+  //std::unordered_map<uint32_t, adsb_data> aircraft;
+
   double ref_lat, ref_lon;
   bool ref_valid;
   int prune_counter;  // For periodic stale aircraft pruning
@@ -434,6 +438,9 @@ static adsb_data* find_or_create_aircraft(adsb_context& ctx, uint32_t icao, floa
   return &ctx.aircraft[oldest_idx];
 }
 
+
+
+// Periodic pruning of stale aircraft
 static void prune_stale_aircraft(adsb_context& ctx, float current_time) {
   for (int i = 0; i < ADSB_MAX_AIRCRAFT; ++i) {
     if (ctx.aircraft[i].icao != 0 &&
