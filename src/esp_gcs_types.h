@@ -125,3 +125,8 @@ enum filter_t {
   W_AVERAGE,  
   KALMAN_FILTER
 };
+
+
+struct touch_point_t {
+  uint16_t x,y;  
+};

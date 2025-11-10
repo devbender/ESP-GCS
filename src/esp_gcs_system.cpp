@@ -1,6 +1,8 @@
 #include "esp_gcs_system.h"
 
-ESP_GCS_SYSTEM::ESP_GCS_SYSTEM() { }
+ESP_GCS_SYSTEM::ESP_GCS_SYSTEM() { 
+
+ }
 
 
 void ESP_GCS_SYSTEM::init(void) {
@@ -68,6 +70,91 @@ void ESP_GCS_SYSTEM::set_palette_4bit(LGFX_Sprite *layer) {
 
 
 
+
 void ESP_GCS_SYSTEM::push_fb(){
     fb_0.pushSprite(0, 0);
+}
+
+
+
+FT6236G ESP_GCS_SYSTEM::tc;
+TOUCHINFO ESP_GCS_SYSTEM::ti;
+touch_point_t ESP_GCS_SYSTEM::tpoint;
+touch_point_t ESP_GCS_SYSTEM::tpoint_o;
+
+QueueHandle_t ESP_GCS_SYSTEM::queue_events = nullptr;
+
+ESP_GCS_DATALINK ESP_GCS_SYSTEM::datalink;
+
+
+#define ESP_GCS_EVENT_TOUCH 39
+
+void ESP_GCS_SYSTEM::task_touch_events(void *pvParameters) {
+
+    log_i("task_touch_events - started");
+    
+    tc.init(ft6236g_i2c_sda, ft6236g_i2c_scl, false, 400000);
+    
+    for(;;) {        
+
+        if (tc.getSamples(&ti) == FT_SUCCESS) {
+            tpoint.x = ti.y[0];
+            tpoint.y = 320 - ti.x[0];
+
+            if(tpoint_o.x != tpoint.x || tpoint_o.y != tpoint.y) {
+                tpoint_o.x = tpoint.x;
+                tpoint_o.y = tpoint.y;
+
+                log_i("TOUCH: %d,%d", tpoint.x, tpoint.y);
+
+                // send touch event                
+                uint8_t event = ESP_GCS_EVENT_TOUCH;
+                xQueueSend( queue_events, (void*)&event, 0 );
+
+                
+                // debounce
+                vTaskDelay(100 / portTICK_PERIOD_MS);
+            }
+
+        }
+    }
+}
+
+
+
+void ESP_GCS_SYSTEM::task_system_events(void *pvParameters) {
+
+    log_i("task_system_events - started"); 
+
+    queue_events = xQueueCreate(10, sizeof(uint8_t));
+    
+    
+    for(;;) {
+
+        if(queue_events != 0) {
+
+            // wait for event
+            uint8_t event;
+            xQueueReceive( queue_events, &event, portMAX_DELAY );
+                
+            switch(event) {
+                case ESP_GCS_EVENT_TOUCH: {
+                    log_i("TOUCH EVENT RECEIVED");
+                    datalink.print_aircrafts();
+                    break;
+                }
+
+                default: {
+                    log_i("UNKNOWN EVENT RECEIVED");
+                    break;
+                }
+            }
+            taskYIELD();
+        } 
+        else {
+        
+            log_i("SYSTEM EVENT TASK RUNNING");
+            vTaskDelay(3000 / portTICK_PERIOD_MS);
+        }
+    }
 }

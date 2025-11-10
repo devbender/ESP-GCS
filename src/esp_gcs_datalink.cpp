@@ -91,8 +91,7 @@ void ESP_GCS_DATALINK::process_raw(void* arg, AsyncClient* client, void *data, s
   const char* cp = reinterpret_cast<const char*>(data);
   m_tcp_rx_buffer.append(cp, len);
 
-  // 2. Get the current time ONCE.
-  // This is the correct way to call your V5 decoder.
+  // 2. Get the current time ONCE.  
   float current_time = millis() / 1000.0f;
 
   // 3. Process every complete message in the buffer
@@ -132,7 +131,7 @@ void ESP_GCS_DATALINK::process_raw(void* arg, AsyncClient* client, void *data, s
     // which is acceptable in the network handler.
     std::string msg = m_tcp_rx_buffer.substr(start, end - start + 1);
 
-    // 5. Call your 10/10 decoder with the context, message, and time
+    // 5. Call decoder with the context, message, and time
     adsb_decode_message(m_adsb_ctx, msg.c_str(), current_time);
 
     //log_d("adsb_raw_data: %s | time: %f", msg.c_str(), current_time);
@@ -144,7 +143,7 @@ void ESP_GCS_DATALINK::process_raw(void* arg, AsyncClient* client, void *data, s
 }
 
 
-void ESP_GCS_DATALINK::set_adsb_local_reference(double lat, double lon) {
+void ESP_GCS_DATALINK::set_cpr_local_reference(double lat, double lon) {
   // Call the global 'inline' function from esp_gcs_adsb_decoder.h
   // and pass it our private static context
   adsb_set_local_reference(m_adsb_ctx, lat, lon);

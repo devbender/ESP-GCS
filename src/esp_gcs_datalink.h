@@ -44,7 +44,7 @@ public:
     return m_adsb_ctx;
   }
 
-  static void set_adsb_local_reference(double lat, double lon);
+  static void set_cpr_local_reference(double lat, double lon);
   static void print_aircrafts();
 
 private:  

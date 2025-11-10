@@ -2,30 +2,13 @@
 
 #define LGFX_USE_V1
 #include <LovyanGFX.hpp>
+#include <FT6236G.h>
 
 #include "esp_gcs_colors.h"
 #include "my_esp_gcs_config.h"
 #include "esp_gcs_datalink.h"
 #include "esp_gcs_display_parallel16_9488.h"
 #include "esp_gcs_display_spi_9342.h"
-
-
-#define EVENT_TASK_STACK_SIZE	1024*8
-#define TOUCH_TASK_STACK_SIZE	1024*8
-
-#define OVERLAY_TASK_STACK_SIZE	1024*8
-#define INIT_TASK_STACK_SIZE	1024*8
-#define BATTERY_TASK_STACK_SIZE	1024*2
-
-
-#define INIT_TASK_PRIORITY	    (configMAX_PRIORITIES - 1)  // HIGH
-#define TOUCH_TASK_PRIORITY	    (configMAX_PRIORITIES - 1)  // HIGH
-#define EVENT_TASK_PRIORITY	    (configMAX_PRIORITIES - 5)  // MID-HIGH
-#define OVERLAY_TASK_PRIORITY	(tskIDLE_PRIORITY + 5)		// LOW
-
-
-
-
 
 
 class ESP_GCS_SYSTEM {
@@ -35,9 +18,21 @@ class ESP_GCS_SYSTEM {
 
         esp_gcs_touch_t touch = FT6236;
         esp_gcs_display_t display = PARALLEL_9488;
+    
+    protected:
+        static FT6236G tc;
+        static TOUCHINFO ti;
+        static touch_point_t tpoint, tpoint_o;
+
+        static const uint8_t ft6236g_i2c_sda = 38;
+        static const uint8_t ft6236g_i2c_scl = 39;
+
+        static SemaphoreHandle_t mutex;
+        static QueueHandle_t queue_events;
+
 
     public:
-        LGFX_Parallel_9488 lcd;     
+        LGFX_Parallel_9488 lcd;
         int fb_center_x, fb_center_y;
         uint16_t fb_width, fb_height;
         
@@ -48,7 +43,7 @@ class ESP_GCS_SYSTEM {
 
     public:
         
-        ESP_GCS_DATALINK datalink;        
+        static ESP_GCS_DATALINK datalink;        
 
     public:
         ESP_GCS_SYSTEM();
@@ -67,5 +62,8 @@ class ESP_GCS_SYSTEM {
 
         void push_fb();
 
+        static void task_touch_events(void *pvParameters);
         static void task_system_events(void *pvParameters);
+
+        
 };
