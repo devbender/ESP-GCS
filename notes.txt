@@ -1,4 +1,14 @@
 
+  size_t total_psram = ESP.getPsramSize();
+    
+  log_i("#################################################################################################");
+  log_i("\n--- PSRAM Confirmation ---");
+  log_i("PSRAM Total size: %lu bytes (%.2f MB)\n", total_psram, (float)total_psram / 1024.0 / 1024.0);        
+  log_i("Current Free PSRAM: %lu bytes\n", ESP.getFreePsram());
+  log_i("#################################################################################################");
+
+
+
 void ESP_GCS_SYSTEM::init_fb(esp_gcs_config_t* config) {
 
 

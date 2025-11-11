@@ -233,6 +233,9 @@ void ESP_GCS_DATALINK::print_aircrafts() {
 
   // ---Loop through the aircraft array ---
   // (ADSB_MAX_AIRCRAFT is defined in esp_gcs_adsb_decoder.h)
+  log_i("----------------------------------------------------------------------------------------------------------------");
+  log_i("# ADSB Aircraft List at %.1f seconds:", current_time_sec);
+  log_i("----------------------------------------------------------------------------------------------------------------");
   for (int i = 0; i < ADSB_MAX_AIRCRAFT; ++i) {
       
       // Get a reference to the aircraft data
@@ -246,7 +249,7 @@ void ESP_GCS_DATALINK::print_aircrafts() {
           // --- 5. Print all available data in a formatted string ---
           char buffer[256];
           snprintf(buffer, sizeof(buffer),
-              " > ICAO: %06X | CS: %-8s | ALT: %5ld ft | SPD: %3.0f kt | HDG: %3.0f | POS: %7.4f, %7.4f | SEEN: %.0fs ago",
+              " * ICAO: %06X | CS: %-8s | ALT: %5ld ft | SPD: %3.0f kt | HDG: %3.0f | POS: %7.4f, %7.4f | SEEN: %.0fs ago",
               ac.icao,
               ac.valid_callsign ? ac.callsign : "----",
               (ac.alt == INT32_MIN) ? 0 : ac.alt, // Show 0 for invalid Gillham
@@ -260,11 +263,13 @@ void ESP_GCS_DATALINK::print_aircrafts() {
           log_i("%s", buffer);                
       }
   }
-  log_i("----------------------------------------------------------------------------------------------------------------");
+  
 
   if (active_aircraft == 0) {
-      log_d("  No active aircraft found.");
+      log_i(" ***  No active aircraft *** ");
   }
+  log_i("----------------------------------------------------------------------------------------------------------------");
+
 
 
 }

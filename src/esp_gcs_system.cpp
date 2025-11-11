@@ -102,15 +102,11 @@ void ESP_GCS_SYSTEM::task_touch_events(void *pvParameters) {
             tpoint.y = 320 - ti.x[0];
 
             if(tpoint_o.x != tpoint.x || tpoint_o.y != tpoint.y) {
-                tpoint_o.x = tpoint.x;
-                tpoint_o.y = tpoint.y;
-
-                log_i("TOUCH: %d,%d", tpoint.x, tpoint.y);
+                tpoint_o = tpoint;                
 
                 // send touch event                
                 uint8_t event = ESP_GCS_EVENT_TOUCH;
                 xQueueSend( queue_events, (void*)&event, 0 );
-
                 
                 // debounce
                 vTaskDelay(100 / portTICK_PERIOD_MS);
@@ -139,7 +135,7 @@ void ESP_GCS_SYSTEM::task_system_events(void *pvParameters) {
                 
             switch(event) {
                 case ESP_GCS_EVENT_TOUCH: {
-                    log_i("TOUCH EVENT RECEIVED");
+                    log_i("TOUCH EVENT - %d | %d", tpoint.x, tpoint.y);
                     datalink.print_aircrafts();
                     break;
                 }
