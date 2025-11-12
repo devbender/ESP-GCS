@@ -23,9 +23,18 @@ static void task_print_info(void *pvParameters);
 // #############################################################################################################
 // SETUP
 // #############################################################################################################
-void setup() {
-    Serial.begin(115200);
-    delay(1000);
+void setup() {    
+    
+    delay(3000); // wait for serial monitor
+
+    size_t total_psram = ESP.getPsramSize();
+
+    log_i("#################################################################################################");
+    log_i("--- PSRAM Info ---");
+    log_i("PSRAM Total size: %lu bytes (%.2f MB)", total_psram, (float)total_psram / 1024.0 / 1024.0);        
+    log_i("Current Free PSRAM: %lu bytes", ESP.getFreePsram());
+    log_i("#################################################################################################");
+
     config.display.type = PARALLEL_9488;
     config.display.width = 480;
     config.display.height = 320;
