@@ -15,14 +15,43 @@ void ESP_GCS_SYSTEM::init(void) {
     digitalWrite(LCD_BLK, HIGH);
 
     lcd.init();
+    lcd.initDMA();
     lcd.setRotation(1);        
     lcd.fillScreen(TFT_BLACK);
-    lcd.setPivot( lcd.width()/2, lcd.height()/2 );
+    lcd.setPivot( lcd.width()/2, lcd.height()/2 );    
 
-    fb_width = 480; fb_height = 320;
+    fb_width = lcd.width(); 
+    fb_height = lcd.height();
+
+    lcd.drawCenterString("INITIALIZING...", fb_width/2, fb_height/2, 2);
+    delay(1000);
+
+
+    // initialize framebuffers
+    for (int i = 0; i < FRAMEBUFFER_COUNT; i++) {
+        fb[i].setPsram(false);
+        fb[i].setColorDepth(COLOR_DEPTH);
+        
+        if (!fb[i].createSprite(fb_width, fb_height)) {
+            log_i("Failed to allocate fb[%d]", i);
+            lcd.drawCenterString("Framebuffer allocation failed!", fb_width / 2, fb_height / 2, 2);
+            while (true) delay(1000);
+        }
+        else {
+            log_i("Framebuffer %d allocated: %dx%d @ %d bpp", i, fb_width, fb_height, COLOR_DEPTH);
+            lcd.fillScreen(TFT_BLACK);
+            lcd.drawCenterString("FB ALLOCATION OK!", fb_width/2, fb_height/2, 2);
+        }
+        
+        fb[i].fillScreen(TFT_BLACK);
+    }
+
+    lcd.startWrite();
+    last_fps_update = millis();
     
-    cfg_sp(&fb_0, fb_width, fb_height);
-    cfg_sp(&fb_1, fb_width, fb_height);    
+    
+    // cfg_sp(&fb_0, fb_width, fb_height);
+    // cfg_sp(&fb_1, fb_width, fb_height);    
 }
 
 
@@ -72,7 +101,52 @@ void ESP_GCS_SYSTEM::set_palette_4bit(LGFX_Sprite *layer) {
 
 
 void ESP_GCS_SYSTEM::push_fb(){
-    fb_0.pushSprite(0, 0);
+    //fb_0.pushSprite(0, 0);
+
+// Wait for previous DMA to finish
+    while (lcd.dmaBusy()) { }
+
+    LGFX_Sprite* fb_current = &fb[draw_index];
+
+    // Calculate position
+    static float angle = 0.0f;
+    int x = fb_width/2 + (int)(sin(angle) * 100);
+    int y = fb_height/2 + (int)(cos(angle) * 100);
+    angle += 0.05f;
+
+    // Draw - fillScreen is actually fastest for full updates
+    fb_current->fillScreen(TFT_BLACK);  // 0 = BLACK
+    fb_current->fillCircle(x, y, 40, TFT_BLUE);  // 2 = BLUE
+    
+    fb_current->setTextSize(1);
+    fb_current->setTextColor(TFT_YELLOW, TFT_TRANSPARENT);  // WHITE on BLACK
+    fb_current->drawString("Double Buffer (4-bit)", 50, 10);
+    
+    fb_current->setTextSize(2);
+    char buf[32];
+    snprintf(buf, sizeof(buf), "FPS: %.1f", fps);
+    fb_current->setTextColor(TFT_RED, TFT_TRANSPARENT);  // YELLOW on BLACK
+    fb_current->drawString(buf, 10, fb_height - 30);
+
+    // Push via DMA
+    lcd.pushImageDMA(
+        0, 0, fb_width, fb_height,
+        fb_current->getBuffer(),
+        fb_current->getColorDepth(),
+        fb_current->getPalette()
+    );
+
+    // Swap buffers
+    draw_index = 1 - draw_index;
+
+    // FPS tracking
+    frame_counter++;
+    uint32_t now = millis();
+    if (now - last_fps_update >= 1000) {
+        fps = (frame_counter * 1000.0f) / (now - last_fps_update);
+        frame_counter = 0;
+        last_fps_update = now;        
+    }
 }
 
 
@@ -153,4 +227,12 @@ void ESP_GCS_SYSTEM::task_system_events(void *pvParameters) {
             vTaskDelay(3000 / portTICK_PERIOD_MS);
         }
     }
+}
+
+
+
+
+
+void ESP_GCS_SYSTEM::task_framebuffer(void *pvParameters) {
+
 }

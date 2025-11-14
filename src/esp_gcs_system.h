@@ -10,11 +10,18 @@
 #include "esp_gcs_display_parallel16_9488.h"
 #include "esp_gcs_display_spi_9342.h"
 
+#define COLOR_DEPTH 8
+#define FRAMEBUFFER_COUNT 2
 
 class ESP_GCS_SYSTEM {
 
     private:        
         int mavlink_hb_max_window = 3;
+
+        float fps = 0.0f;
+        uint32_t frame_counter = 0;
+        uint32_t last_fps_update = 0;
+        volatile int draw_index = 0;
 
         esp_gcs_touch_t touch = FT6236;
         esp_gcs_display_t display = PARALLEL_9488;
@@ -28,18 +35,18 @@ class ESP_GCS_SYSTEM {
         static const uint8_t ft6236g_i2c_scl = 39;
 
         static SemaphoreHandle_t mutex;
-        static QueueHandle_t queue_events;
-
+        static QueueHandle_t queue_events;        
 
     public:
         LGFX_Parallel_9488 lcd;
         int fb_center_x, fb_center_y;
         uint16_t fb_width, fb_height;
+
+        TaskHandle_t xHandleEventsTask = NULL;
         
         LGFX_Sprite fb_0 = LGFX_Sprite(&lcd);
         LGFX_Sprite fb_1 = LGFX_Sprite(&lcd);
-
-        TaskHandle_t xHandleEventsTask = NULL;
+        LGFX_Sprite fb[FRAMEBUFFER_COUNT] = { LGFX_Sprite(&lcd), LGFX_Sprite(&lcd) };
 
     public:
         
@@ -62,8 +69,8 @@ class ESP_GCS_SYSTEM {
 
         void push_fb();
 
+        static void task_framebuffer(void *pvParameters);
         static void task_touch_events(void *pvParameters);
         static void task_system_events(void *pvParameters);
-
         
 };

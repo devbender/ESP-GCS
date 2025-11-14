@@ -174,4 +174,98 @@ void ESP_GCS_ADSB::render_aircraft(uint16_t color) {
 
 
 
+void loop2() {
+    uint32_t now = millis();
+
+    // 1. Check if the previous DMA transfer is complete
+    // If a buffer was transferring (dma_index != -1) and the transfer is now finished (getDmaBusy() == false), release the buffer.
+    if (dma_index != -1 && !lcd.dmaBusy()) {
+      dma_index = -1; 
+    }
+
+    // 2. DRAW PHASE: Draw into the current draw buffer
+    LGFX_Sprite* draw_fb = &fb[draw_index];
+
+    draw_fb->fillScreen(COLOR_BLACK);
+    static float angle = 0.0f;
+    int x = CENTER_X + (int)(sin(angle) * 100);
+    int y = CENTER_Y + (int)(cos(angle) * 100);
+    angle += 0.1f;
+
+    draw_fb->fillCircle(x, y, 40, COLOR_SKY);
+    draw_fb->setTextSize(1);
+    draw_fb->setTextColor(COLOR_WHITE, COLOR_BLACK);
+    draw_fb->drawString("Triple Buffer (4-bit, DMA)", 50, 10);
+    
+    draw_fb->setTextSize(2);
+    char buf[32];
+    snprintf(buf, sizeof(buf), "FPS: %.1f", fps);
+    draw_fb->setTextColor(COLOR_YELLOW, COLOR_BLACK);
+    draw_fb->drawString(buf, 10, SCREEN_H - 30);
+
+    // Mark current buffer as ready for display
+    ready_index = draw_index;
+
+    // 3. START DMA if possible (safe scheduling)
+    // Check if a buffer is ready AND no other buffer is currently DMAing
+    if (ready_index != -1 && dma_index == -1) { 
+        // Start DMA for the ready buffer
+        dma_index = ready_index;
+
+        // FIX: Use the 7-argument pushImageDMA overload required for non-native color depths (like 4-bit)
+        // This explicitly passes the buffer data, the color depth, and the palette.
+        // fb[dma_index].pushImageDMA(0, 0, SCREEN_W, SCREEN_H,
+        //     fb[dma_index].getBuffer(), 
+        //     fb[dma_index].getColorDepth(), 
+        //     fb[dma_index].getPalette());
+
+        //template<typename T>
+        //void pushImageDMA(int32_t x, int32_t y, int32_t w, int32_t h, const T* data)
+
+        //template<typename T>
+        //void pushImageDMA(int32_t x, int32_t y, int32_t w, int32_t h, const void* data, color_depth_t depth, const T* palette)
+
+        //lcd.pushImageDMA( 0, 0, SCREEN_W, SCREEN_H, (lgfx::rgb565_t*)fb[dma_index].getBuffer(), fb[dma_index].getColorDepth(), (lgfx::rgb565_t*)fb[dma_index].getPalette() );
+
+        // lcd.pushImageDMA(
+        //     0, 0, SCREEN_W, SCREEN_H,
+        //     fb[dma_index].getBuffer(),                   // raw 4-bit data
+        //     fb[dma_index].getColorDepth(),               // should be 4
+        //     (const lgfx::rgb565_t*)fb[dma_index].getPalette() // pointer to 16-entry palette
+        // );
+
+        
+
+
+        // Now mark the ready buffer as consumed by DMA
+        ready_index = -1;
+    }
+
+    if (dma_index == draw_index)
+        lcd.waitDMA();
+    
+    // 4. Advance draw_index safely: Choose next buffer that is NOT the one currently DMAing
+    // This robust logic ensures the drawing doesn't overwrite the buffer currently being pushed to the display.
+    int next = (draw_index + 1) % 3;
+    for (int i = 0; i < 3; ++i) {
+      int cand = (draw_index + 1 + i) % 3;
+      if (cand != dma_index) { next = cand; break; } // Found a safe buffer
+    }
+    draw_index = next;
+
+    // 5. FPS calculation
+    frame_counter++;
+    if (now - last_fps_update >= 1000) {
+        //fps = (frame_counter * 1000.0f) / (now - last_fps_update);
+        fps = frame_counter * 1000.0f / (float)(now - last_fps_update);
+        frame_counter = 0;
+        last_fps_update = now;
+
+        log_i("FPS: %.1f", fps);
+    }
+
+    // Add a small delay to prevent the loop from spinning too fast if DMA is bottlenecked
+    //delay(1);
+    //while (lcd.dmaBusy()) delayMicroseconds(50);
+}
     
