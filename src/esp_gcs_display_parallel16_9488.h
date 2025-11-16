@@ -6,7 +6,6 @@
 #define LCD_CS 37
 #define LCD_BLK 45
 
-
 class LGFX_Parallel_9488 : public lgfx::LGFX_Device
 {
     // lgfx::Panel_ILI9341 _panel_instance;

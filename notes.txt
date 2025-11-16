@@ -1,4 +1,10 @@
 
+  CTRL + SHIFT + L
+  CTRL + SHIFT + UP/DOWN
+
+grade this code 0/10 in these categories: 
+Structure, Correctness, Performance, Safety, Maintainability and Overall
+  
   size_t total_psram = ESP.getPsramSize();
     
   log_i("#################################################################################################");
