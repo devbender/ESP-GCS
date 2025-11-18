@@ -23,7 +23,7 @@ void ESP_GCS_SYSTEM::init(void) {
     fb_width = lcd.width(); 
     fb_height = lcd.height();
 
-    lcd.drawCenterString("INITIALIZING...", fb_width/2, fb_height/2, 2);
+    lcd.drawCenterString("INITIALIZING...", fb_width/2, fb_height/2);
     delay(1000);
 
 
@@ -34,13 +34,13 @@ void ESP_GCS_SYSTEM::init(void) {
         
         if (!fb[i].createSprite(fb_width, fb_height)) {
             log_i("Failed to allocate fb[%d]", i);
-            lcd.drawCenterString("Framebuffer allocation failed!", fb_width / 2, fb_height / 2, 2);
+            lcd.drawCenterString("Framebuffer allocation failed!", fb_width / 2, fb_height / 2);
             while (true) delay(1000);
         }
         else {
             log_i("Framebuffer %d allocated: %dx%d @ %d bpp", i, fb_width, fb_height, COLOR_DEPTH);
             lcd.fillScreen(TFT_BLACK);
-            lcd.drawCenterString("FB ALLOCATION OK!", fb_width/2, fb_height/2, 2);
+            lcd.drawCenterString("FB ALLOCATION OK!", fb_width/2, fb_height/2);
         }
         
         fb[i].fillScreen(TFT_BLACK);

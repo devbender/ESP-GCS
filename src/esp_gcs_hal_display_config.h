@@ -19,6 +19,6 @@ struct DisplayConfig {
 
     // --- Task ---
     uint32_t task_stack_size = 4096;
-    UBaseType_t task_priority = 1;
+    UBaseType_t task_priority = 5;
     BaseType_t task_core = 1;
 };

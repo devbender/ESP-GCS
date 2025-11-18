@@ -1,4 +1,5 @@
 #pragma once
+#include "esp_task_wdt.h"
 #include "esp_gcs_hal_display_device.h"
 #include "esp_gcs_hal_framebuffer_manager.h"
 #include "esp_gcs_hal_display_config.h"

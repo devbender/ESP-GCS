@@ -134,7 +134,7 @@ void ESP_GCS_DATALINK::process_raw(void* arg, AsyncClient* client, void *data, s
     // 5. Call decoder with the context, message, and time
     adsb_decode_message(m_adsb_ctx, msg.c_str(), current_time);
 
-    //log_d("adsb_raw_data: %s | time: %f", msg.c_str(), current_time);
+    log_d("adsb_raw_data: %s | time: %f", msg.c_str(), current_time);
 
     // 6. Erase the processed message (and any junk before it)
     // from the buffer, so we can look for the next one.

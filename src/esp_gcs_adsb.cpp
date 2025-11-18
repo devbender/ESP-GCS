@@ -22,12 +22,17 @@ ESP_GCS_ADSB::ESP_GCS_ADSB()
 
 ESP_GCS_ADSB::~ESP_GCS_ADSB() {  
   renderer.stop();
-  aircraft_sprite.deleteSprite();
+  
+  if (aircraft_sprite) {
+      aircraft_sprite->deleteSprite();
+      delete aircraft_sprite;
+      aircraft_sprite = nullptr;
+  }
 }
 
 
 // Define the shape of the aircraft (triangle + vector) at (0, 0)
-bool ESP_GCS_ADSB::init_aircraft_sprite() {
+bool ESP_GCS_ADSB::init_sprite(LGFX_Sprite*& sprite, uint16_t aircraft_color) {
     
     // 1. Get the parent panel from the DisplayDevice
     LGFX_Parallel_9488* panel = device.get();
@@ -36,38 +41,75 @@ bool ESP_GCS_ADSB::init_aircraft_sprite() {
         return false;
     }
 
-    // 2. Create the sprite
-    // AIRCRAFT_SIZE is 6, so a 16x16 sprite is big enough for the 12x12 symbol
-    if (!aircraft_sprite.createSprite(2 * AIRCRAFT_SIZE, 2 * AIRCRAFT_SIZE)) {
-        log_e("Failed to create aircraft_sprite.");
+    // if we already had one, free it first
+    if (sprite) {
+        sprite->deleteSprite();
+        delete sprite;
+        sprite = nullptr;
+    }
+
+    // Allocate sprite with a valid parent (safe)
+    sprite = new LGFX_Sprite(panel);
+    if (!sprite) {
+        log_e("Failed to allocate aircraft_sprite object.");
         return false;
     }
+
+    // 3. Configure the sprite    
+    sprite->setPsram(config.use_psram);
+    sprite->setColorDepth(config.color_depth);
+
+    // 2. Create the sprite
+    // Add padding to avoid clipping on rotation
+    //const int sprite_size = 2 * AIRCRAFT_SIZE + 4; // -> e.g., 16+4 = 20
+    if (!sprite->createSprite(sprite_size, sprite_size)) {
+        log_e("Failed to create aircraft_sprite (%dx%d) psram=%d depth=%d",
+              sprite_size, sprite_size, (int)config.use_psram, (int)config.color_depth);
+        delete sprite;
+        sprite = nullptr;
+        return false;
+    }
+    // fill with black
+    sprite->fillScreen(TFT_BLACK);
+
+    // draw sprite
+    draw_aircraft_sprite(sprite, aircraft_color);
     
-    // 3. Configure the sprite
-    aircraft_sprite.setPsram(config.use_psram);
-    aircraft_sprite.setColorDepth(config.color_depth);
-    aircraft_sprite.fillScreen(TFT_BLACK); // Important: make the background transparent
-    
-    // 4. Draw the shape at the center of its own sprite.
-    int center = AIRCRAFT_SIZE; // Center of the 12x12 sprite is (6, 6)
-
-    // Draw the main body (Triangle)
-    aircraft_sprite.fillTriangle(
-        center, center - AIRCRAFT_SIZE, // Nose
-        center - AIRCRAFT_SIZE, center + AIRCRAFT_SIZE, // Left wing
-        center + AIRCRAFT_SIZE, center + AIRCRAFT_SIZE, // Right wing
-        TFT_WHITE
-    );
-
-    // Draw the heading vector (e.g., a small line forward)
-    //aircraft_sprite.drawLine(center, center, center, center - VECTOR_SIZE, TFT_GREEN);
-
-    // 5. Set the pivot point to the center of the sprite for rotation.
-    //aircraft_sprite.setPivot(center, center); 
+    // Set the pivot point to the center of the sprite for rotation.
+    sprite->setPivot(sprite_size/2, sprite_size/2);
     
     log_i("Aircraft sprite initialized.");
     return true;
 }
+
+
+void ESP_GCS_ADSB::draw_aircraft_sprite(LGFX_Sprite* sprite, uint16_t color) {
+  
+  // 4. Draw the shape at the center of its own sprite.
+  int center = sprite_size / 2;
+  int A = AIRCRAFT_SIZE;
+
+  // ============================
+  // Main white triangle
+  // ============================
+  sprite->fillTriangle(
+      center - A,           center + A - 1,   // (x, y + A*2-1)
+      center,               center - A,       // (x + A, y)
+      center + A - 1,       center + A - 1,   // (x + A*2-1, y + A*2-1)
+      color
+  );
+
+  // ============================
+  // Black cut-out triangle
+  // ============================
+  sprite->fillTriangle(
+      center,               center + A - 3,   // (x + A, y + A*2-3)
+      center - 4,           center + A - 1,   // (x + A-4, y + A*2-1)
+      center + 4,           center + A - 1,   // (x + A+4, y + A*2-1)
+      TFT_BLACK
+  );
+}
+
 
 
 // --- Public Methods ---
@@ -86,7 +128,14 @@ bool ESP_GCS_ADSB::begin() {
 
     // --- NEW STEP: Initialize Aircraft Sprite ---
     log_i("Initializing Aircraft Sprite...");
-    if (!init_aircraft_sprite()) {
+    if (!init_sprite(aircraft_sprite, TFT_WHITE)) {
+        log_e("FAILED to init aircraft sprite!");
+        return false;
+    }
+
+
+    log_i("Initializing Ownship Aircraft Sprite...");
+    if (!init_sprite(ownship_sprite, TFT_RED)) {
         log_e("FAILED to init aircraft sprite!");
         return false;
     }
@@ -103,7 +152,7 @@ bool ESP_GCS_ADSB::begin() {
     log_i("Setting draw callback...");
     renderer.setDrawCallback(draw_loop, this);
 
-    log_i("ADSBDisplay.begin() complete.");
+    log_i("begin() complete.");
     return true;
 }
 
@@ -129,19 +178,7 @@ void ESP_GCS_ADSB::draw_loop(LGFX_Sprite& fb, void* context) {
 
 
 
-void ESP_GCS_ADSB::draw_aircraft(LGFX_Sprite& sprite, uint16_t x, uint16_t y, uint16_t color) {
-  
-  sprite.fillTriangle(x, y + AIRCRAFT_SIZE*2-1,
-                        x + AIRCRAFT_SIZE, y,
-                        x + AIRCRAFT_SIZE*2-1, y + AIRCRAFT_SIZE*2-1,
-                        color);
 
-  sprite.fillTriangle(x + AIRCRAFT_SIZE, y + AIRCRAFT_SIZE*2-3,
-                        x + AIRCRAFT_SIZE-4, y + AIRCRAFT_SIZE*2-1,
-                        x + AIRCRAFT_SIZE+4, y + AIRCRAFT_SIZE*2-1,
-                        TFT_BLACK);
-  
-}
 
 void ESP_GCS_ADSB::add_aircraft(uint32_t icao, aircraft_data_t aircraft) {
   
@@ -201,12 +238,34 @@ void ESP_GCS_ADSB::render_ui_layer(LGFX_Sprite *layer) {
   }
   
   // draw own aircraft  
-  aircraft_sprite.pushRotateZoom( layer, x_center, y_center, 0, 1.0, 1.0 );
+  ownship_sprite->pushRotateZoom( layer, x_center, y_center, 0, 1.0, 1.0 );
 
   // Now, safely get the aircraft data  
-  std::lock_guard<std::mutex> lock(aircraft_list_mutex);
-  for(const auto& [icao, ac] : aircraft_list) {
-      aircraft_sprite.pushRotateZoom(layer, ac.x, ac.y, ac.heading, 1.0, 1.0);
+  // std::lock_guard<std::mutex> lock(aircraft_list_mutex);
+  // for(const auto& [icao, ac] : aircraft_list) {
+  //     ac.heading+=1;
+  //     aircraft_sprite->pushRotateZoom(layer, ac.x, ac.y, ac.heading, 1.0, 1.0);
+  // }
+
+
+  // 1. Copy aircraft list quickly under lock
+  std::vector<aircraft_data_t> snapshot;
+  snapshot.reserve(aircraft_list.size());
+
+  {
+    std::lock_guard<std::mutex> lock(aircraft_list_mutex);
+    for (const auto& [icao, ac] : aircraft_list) {
+        snapshot.push_back(ac);   // copy only
+    }
   }
+
+  // 2. Render WITHOUT holding the lock
+  for (auto& ac : snapshot) {
+    //aircraft_sprite->pushRotateZoom(layer, ac.x, ac.y, ac.heading, 1.0, 1.0);
+    aircraft_sprite->pushRotateZoom(layer, ac.x, ac.y,rotation, 1.0, 1.0);
+
+    rotation = (rotation + 1) % 360;
+  }
+
 
 }

@@ -41,7 +41,16 @@ bool RenderTask::start() {
         &task_handle,
         config.task_core
     );
-    
+
+    // BaseType_t result = xTaskCreate(
+    //     taskLoopEntry,
+    //     "RenderTask",
+    //     config.task_stack_size,
+    //     this,
+    //     config.task_priority,
+    //     &task_handle        
+    // );
+
     if (result != pdPASS) {
         log_e("xTaskCreatePinnedToCore failed");
         running.store(false);
@@ -49,6 +58,9 @@ bool RenderTask::start() {
         vSemaphoreDelete(shutdown_signal);
         return false;
     }
+
+    // Subscribe this task to the watchdog
+    esp_task_wdt_add(task_handle);
     
     log_i("RenderTask created on core %d with priority %d", 
           config.task_core, config.task_priority);
@@ -64,6 +76,11 @@ void RenderTask::stop() {
     
     log_i("Stopping RenderTask...");
     running.store(false);
+
+    // Unsubscribe from watchdog
+    if (task_handle) {
+        esp_task_wdt_delete(task_handle);
+    }
     
     // Wait for task to acknowledge shutdown
     if (shutdown_signal) {
@@ -110,9 +127,6 @@ void RenderTask::taskLoop() {
     
     uint32_t target_frame_time = config.target_fps > 0 ? (1000 / config.target_fps) : 16;
     
-    // Use microseconds for precision
-    //uint32_t target_frame_time = config.target_fps > 0 ? (1000000 / config.target_fps) : 16667;
-    
     log_i("RenderTask loop running (target frame time: %dms)", target_frame_time);
     
     // Verify we have buffers
@@ -125,6 +139,9 @@ void RenderTask::taskLoop() {
     
     while (running.load()) {
         uint32_t frame_start = millis();
+
+        // Feed the watchdog at the start of each frame
+        esp_task_wdt_reset(); 
         
         // Process any pending commands
         processQueue();
