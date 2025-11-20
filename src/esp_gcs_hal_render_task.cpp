@@ -29,30 +29,22 @@ bool RenderTask::start() {
         return false;
     }
     
+    // set running var
     running.store(true);
-    
-    // Create the render task
-    BaseType_t result = xTaskCreatePinnedToCore(
+
+    // create render tasl
+    BaseType_t result = xTaskCreate(
         taskLoopEntry,
         "RenderTask",
         config.task_stack_size,
         this,
-        config.task_priority,
-        &task_handle,
-        config.task_core
+        config.task_core,
+        &task_handle        
     );
-
-    // BaseType_t result = xTaskCreate(
-    //     taskLoopEntry,
-    //     "RenderTask",
-    //     config.task_stack_size,
-    //     this,
-    //     config.task_priority,
-    //     &task_handle        
-    // );
-
+    
+    // handle failed xtaskcreate
     if (result != pdPASS) {
-        log_e("xTaskCreatePinnedToCore failed");
+        log_e("xTaskCreate failed");
         running.store(false);
         vQueueDelete(command_queue);
         vSemaphoreDelete(shutdown_signal);
@@ -127,7 +119,7 @@ void RenderTask::taskLoop() {
     
     uint32_t target_frame_time = config.target_fps > 0 ? (1000 / config.target_fps) : 16;
     
-    log_i("RenderTask loop running (target frame time: %dms)", target_frame_time);
+    log_v("RenderTask loop running (target frame time: %dms)", target_frame_time);
     
     // Verify we have buffers
     if (buffers.getCount() == 0) {
@@ -169,7 +161,7 @@ void RenderTask::taskLoop() {
             
             // Debug output every 60 frames
             if (frame_num % 60 == 0) {
-                log_d("Frame %d rendered (FPS: %.2f)", frame_num, getFPS());
+                log_v("Frame %d rendered (FPS: %.2f)", frame_num, getFPS());
             }
         } else {
             // No callback set yet, just wait
@@ -187,8 +179,10 @@ void RenderTask::taskLoop() {
         if (frame_time < target_frame_time) {
             vTaskDelay(pdMS_TO_TICKS(target_frame_time - frame_time));
         } else if (frame_time > target_frame_time * 2) {
-            log_d("Frame took %dms (target: %dms)", frame_time, target_frame_time);
+            log_v("Frame took %dms (target: %dms)", frame_time, target_frame_time);
         }
+
+        taskYIELD();
     }
     
     log_i("RenderTask loop exiting...");

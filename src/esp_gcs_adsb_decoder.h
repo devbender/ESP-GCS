@@ -471,12 +471,12 @@ inline void adsb_decode_message(adsb_context& ctx, const char* raw_msg, float cu
     
   // Stack-only parsing (zero heap allocations)
   if (!raw_msg || raw_msg[0] != '*') {
-    log_d("Invalid ADS-B message format");
+    log_w("Invalid ADS-B message format");
     return;
   }
 
   else {
-    log_d("RX Valid ADS-B message: %s", raw_msg);
+    log_v("RX Valid ADS-B message: %s", raw_msg);
   }
   
   
@@ -485,13 +485,13 @@ inline void adsb_decode_message(adsb_context& ctx, const char* raw_msg, float cu
   while (hex[hex_len] && hex[hex_len] != ';') ++hex_len;
   
   if (hex_len != 28) {
-    log_d("Ignoring short ADS-B message (not long format)");
+    log_v("Ignoring short ADS-B message (not long format)");
     return; // Only long messages
   }
   
   uint8_t bytes[14];
   if (!hex_to_bytes_fast(hex, bytes, 14)) {
-    log_d("Ignoring invalid hex in ADS-B message");
+    log_v("Ignoring invalid hex in ADS-B message");
     return;
   } 
   
@@ -530,14 +530,14 @@ inline void adsb_decode_message(adsb_context& ctx, const char* raw_msg, float cu
 
 
   if (!crc_ok) {
-      log_d("ADS-B message with bad CRC (Calculated: %06X, Received: %06X)", calculated_crc, received_crc);
+      log_v("ADS-B message with bad CRC (Calculated: %06X, Received: %06X)", calculated_crc, received_crc);
       //return;
       // TODO: fix this shit
   }  
   
   
   if (df != 17 && df != 18) {
-    log_d("Ignoring non-ADS-B message (DF=%d)", df);
+    log_v("Ignoring non-ADS-B message (DF=%d)", df);
     return;
   }  
   

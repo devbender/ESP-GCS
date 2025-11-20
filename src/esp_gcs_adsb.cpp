@@ -167,6 +167,8 @@ void ESP_GCS_ADSB::draw_loop(LGFX_Sprite& fb, void* context) {
     //self->draw_aircraft(sprite);
     self->render_ui_layer(&fb);
 
+    // adsb ui small delay
+    vTaskDelay(1);
 
     // Draw FPS
     char buf[32];
@@ -262,7 +264,7 @@ void ESP_GCS_ADSB::render_ui_layer(LGFX_Sprite *layer) {
   // 2. Render WITHOUT holding the lock
   for (auto& ac : snapshot) {
     //aircraft_sprite->pushRotateZoom(layer, ac.x, ac.y, ac.heading, 1.0, 1.0);
-    aircraft_sprite->pushRotateZoom(layer, ac.x, ac.y,rotation, 1.0, 1.0);
+    aircraft_sprite->pushRotateZoom(layer, ac.x, ac.y, rotation, 1.0, 1.0);
 
     rotation = (rotation + 1) % 360;
   }

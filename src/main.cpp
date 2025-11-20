@@ -23,20 +23,19 @@ void setup(){
     config.network.password = WIFI_PASS;
 
     config.network.ip = IPAddress(10,0,0,58);
-    config.network.port = 30002;    
+    config.network.port = 30002;   
 
     datalink.init( &config );
+    ESP_GCS_DATALINK::set_cpr_local_reference(18.465000, -69.942800); // for local CPR, does not need to be exact
 
     if (!adsb.begin()) {
-        log_e("ADS-B Display failed to initialize!");
         while (true) {
-            delay(1000); // Halt
+            log_e("ADS-B INIT FAILED");
+            delay(10000); // Halt
         }
     }
 
-    
-    //ESP_GCS_DATALINK::set_cpr_local_reference(18.4650, -69.9428); // for local CPR
-
+    // add test aircraft
     adsb.add_aircraft( 38, { 140, 100, 45,  60 } );
     adsb.add_aircraft( 39, { 140, 200, 270, 60 } );
 }
@@ -44,6 +43,6 @@ void setup(){
 
 void loop() {
     // ESP_GCS_DATALINK::print_aircrafts();
-    log_i("loop running... %i", millis());
-    delay(1000);
+    log_i("running... %i", millis());
+    delay(5000);
 }
