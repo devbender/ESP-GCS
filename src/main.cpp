@@ -42,7 +42,7 @@ void setup(){
 
 
 void loop() {
-    // ESP_GCS_DATALINK::print_aircrafts();
-    log_i("running... %i", millis());
+    ESP_GCS_DATALINK::print_aircrafts();
+    //log_i("running... %i", millis());
     delay(5000);
 }

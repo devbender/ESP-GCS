@@ -134,7 +134,7 @@ void ESP_GCS_DATALINK::process_raw(void* arg, AsyncClient* client, void *data, s
     // 5. Call decoder with the context, message, and time
     adsb_decode_message(m_adsb_ctx, msg.c_str(), current_time);
 
-    log_d("adsb_raw_data: %s | time: %f", msg.c_str(), current_time);
+    log_v("adsb_raw_data: %s | time: %f", msg.c_str(), current_time);
 
     // 6. Erase the processed message (and any junk before it)
     // from the buffer, so we can look for the next one.
@@ -231,11 +231,10 @@ void ESP_GCS_DATALINK::print_aircrafts() {
 
   int active_aircraft = 0;
 
-  // ---Loop through the aircraft array ---
-  // (ADSB_MAX_AIRCRAFT is defined in esp_gcs_adsb_decoder.h)
-  log_i("----------------------------------------------------------------------------------------------------------------");
-  log_i("# ADSB Aircraft List at %.1f seconds:", current_time_sec);
-  log_i("----------------------------------------------------------------------------------------------------------------");
+  // ---Loop through the aircraft array ---  
+  log_i("\e[2J\e[H");    // Clear screen + move cursor home  
+
+  log_i("--------------------------------------------------------------------------------------------------------------------");
   for (int i = 0; i < ADSB_MAX_AIRCRAFT; ++i) {
       
       // Get a reference to the aircraft data
@@ -246,12 +245,12 @@ void ESP_GCS_DATALINK::print_aircrafts() {
 
           active_aircraft++;
           
-          // --- 5. Print all available data in a formatted string ---
+          // Print all available data in a formatted string
           char buffer[256];
           snprintf(buffer, sizeof(buffer),
               " * ICAO: %06X | CS: %-8s | ALT: %5ld ft | SPD: %3.0f kt | HDG: %3.0f | POS: %7.4f, %7.4f | SEEN: %.0fs ago",
               ac.icao,
-              ac.valid_callsign ? ac.callsign : "----",
+              ac.valid_callsign ? ac.callsign : "------",
               (ac.alt == INT32_MIN) ? 0 : ac.alt, // Show 0 for invalid Gillham
               ac.valid_vel ? ac.speed : 0.0f,
               ac.valid_vel ? ac.heading : 0.0f,
@@ -259,17 +258,14 @@ void ESP_GCS_DATALINK::print_aircrafts() {
               ac.valid_pos ? ac.lon : 0.0f,
               current_time_sec - ac.last_seen
           );
-          // Use log_d, which is a printf-style function, so we pass the buffer as a string format
+          // print buffer
           log_i("%s", buffer);                
       }
-  }
-  
+  }  
 
   if (active_aircraft == 0) {
       log_i(" ***  No active aircraft *** ");
   }
-  log_i("----------------------------------------------------------------------------------------------------------------");
-
-
-
+  
+  log_i("--------------------------------------------------------------------------------------------------------------------");
 }
