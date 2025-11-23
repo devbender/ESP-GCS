@@ -25,9 +25,6 @@ void setup(){
     config.network.ip = IPAddress(10,0,0,58);
     config.network.port = 30002;   
 
-    datalink.init( &config );
-    ESP_GCS_DATALINK::set_cpr_local_reference(18.465000, -69.942800); // for local CPR, does not need to be exact
-
     if (!adsb.begin()) {
         while (true) {
             log_e("ADS-B INIT FAILED");
@@ -38,11 +35,22 @@ void setup(){
     // add test aircraft
     adsb.add_aircraft( 38, { 140, 100, 45,  60 } );
     adsb.add_aircraft( 39, { 140, 200, 270, 60 } );
+
+    datalink.init( &config );
+    ESP_GCS_DATALINK::set_cpr_local_reference(18.465000, -69.942800); // for local CPR, does not need to be exact
 }
 
 
 void loop() {
     ESP_GCS_DATALINK::print_aircrafts();
-    //log_i("running... %i", millis());
-    delay(5000);
+
+    {
+        std::lock_guard<std::mutex> lock(adsb.aircraft_list_mutex);
+
+        for (auto& [icao, aircraft] : adsb.aircraft_list) {
+            aircraft.heading = (aircraft.heading + 10) % 360;
+        }
+    }
+
+    delay(1000);
 }

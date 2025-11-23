@@ -59,9 +59,9 @@ bool ESP_GCS_ADSB::init_sprite(LGFX_Sprite*& sprite, uint16_t aircraft_color) {
     sprite->setPsram(config.use_psram);
     sprite->setColorDepth(config.color_depth);
 
-    // 2. Create the sprite
+    // Create the sprite
     // Add padding to avoid clipping on rotation
-    //const int sprite_size = 2 * AIRCRAFT_SIZE + 4; // -> e.g., 16+4 = 20
+    const int sprite_size = 2 * AIRCRAFT_SIZE + 4; // -> e.g., 16+4(padding) = 20
     if (!sprite->createSprite(sprite_size, sprite_size)) {
         log_e("Failed to create aircraft_sprite (%dx%d) psram=%d depth=%d",
               sprite_size, sprite_size, (int)config.use_psram, (int)config.color_depth);
@@ -85,7 +85,8 @@ bool ESP_GCS_ADSB::init_sprite(LGFX_Sprite*& sprite, uint16_t aircraft_color) {
 
 void ESP_GCS_ADSB::draw_aircraft_sprite(LGFX_Sprite* sprite, uint16_t color) {
   
-  // 4. Draw the shape at the center of its own sprite.
+  // Draw the shape at the center of its own sprite.
+  const int sprite_size = 2 * AIRCRAFT_SIZE + 4; // -> e.g., 16+4(padding) = 20
   int center = sprite_size / 2;
   int A = AIRCRAFT_SIZE;
 
@@ -147,8 +148,7 @@ bool ESP_GCS_ADSB::begin() {
     }
 
     // Set the callback.
-    // We pass our static function 'drawLoop' and a pointer to
-    // 'this' class instance as the context.
+    // Pass static function 'drawLoop' and a pointer to 'this' class instance as the context.
     log_i("Setting draw callback...");
     renderer.setDrawCallback(draw_loop, this);
 
@@ -226,8 +226,7 @@ void ESP_GCS_ADSB::render_ui_layer(LGFX_Sprite *layer) {
 	layer->fillCircle(layer->width()/2, layer->height()/2, layer->height()/2-1, TFT_BLACK);
   layer->drawCircle(layer->width()/2,  layer->height()/2, layer->height()/2-1, TFT_LIGHTGRAY); 
 
-
-    // Inner Circle Params
+  // Inner Circle Params
 	int degMark = 15;
 	int ri = layer->height() / 4;	
   int x_center = layer->width() / 2;
@@ -239,35 +238,23 @@ void ESP_GCS_ADSB::render_ui_layer(LGFX_Sprite *layer) {
 		layer->drawPixel(x_center + cos(a)*ri, y_center + sin(a)*ri, TFT_WHITE);
   }
   
-  // draw own aircraft  
+  // draw my aircraft  
   ownship_sprite->pushRotateZoom( layer, x_center, y_center, 0, 1.0, 1.0 );
 
-  // Now, safely get the aircraft data  
-  // std::lock_guard<std::mutex> lock(aircraft_list_mutex);
-  // for(const auto& [icao, ac] : aircraft_list) {
-  //     ac.heading+=1;
-  //     aircraft_sprite->pushRotateZoom(layer, ac.x, ac.y, ac.heading, 1.0, 1.0);
-  // }
-
-
-  // 1. Copy aircraft list quickly under lock
+  // Copy aircraft list quickly under lock
   std::vector<aircraft_data_t> snapshot;
   snapshot.reserve(aircraft_list.size());
 
   {
     std::lock_guard<std::mutex> lock(aircraft_list_mutex);
-    for (const auto& [icao, ac] : aircraft_list) {
-        snapshot.push_back(ac);   // copy only
+
+    for (const auto& key_val : aircraft_list) {
+        snapshot.push_back(key_val.second);   // copy only
     }
   }
 
-  // 2. Render WITHOUT holding the lock
+  // Render WITHOUT holding the lock
   for (auto& ac : snapshot) {
-    //aircraft_sprite->pushRotateZoom(layer, ac.x, ac.y, ac.heading, 1.0, 1.0);
-    aircraft_sprite->pushRotateZoom(layer, ac.x, ac.y, rotation, 1.0, 1.0);
-
-    rotation = (rotation + 1) % 360;
+    aircraft_sprite->pushRotateZoom(layer, ac.x, ac.y, ac.heading, 1.0, 1.0);
   }
-
-
 }

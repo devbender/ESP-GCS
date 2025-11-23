@@ -35,21 +35,20 @@ class ESP_GCS_ADSB {
         void render_ui_layer(LGFX_Sprite *layer);
         void draw_aircraft_sprite(LGFX_Sprite* sprite, uint16_t color);
 
+        std::mutex aircraft_list_mutex;
+        std::unordered_map<uint32_t, aircraft_data_t> aircraft_list;
+
     private:
         DisplayConfig config;
         DisplayDevice device;
         FrameBufferManager fbManager;
         RenderTask renderer;
 
-        std::mutex aircraft_list_mutex;
-        std::unordered_map<uint32_t, aircraft_data_t> aircraft_list;
-
-        const uint8_t sprite_size = 2 * AIRCRAFT_SIZE + 4; // -> e.g., 16+4 = 20
+        // std::mutex aircraft_list_mutex;
+        // std::unordered_map<uint32_t, aircraft_data_t> aircraft_list;
         
         LGFX_Sprite* aircraft_sprite = nullptr;
         LGFX_Sprite* ownship_sprite = nullptr;
-
-        int rotation=0;
         
         bool init_sprite(LGFX_Sprite*& sprite, uint16_t aircraft_color);
         static void draw_loop(LGFX_Sprite& sprite, void* context);        
