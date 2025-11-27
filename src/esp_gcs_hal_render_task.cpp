@@ -148,21 +148,29 @@ void RenderTask::taskLoop() {
         }
         
         if (current_callback) {
-            // Execute user's drawing function
+            
+            // draw to fb
             current_callback(*sprite, current_context);
-            
-            // Push to display
-            sprite->pushSprite(0, 0);
-            
+
+            // wait for any ongoing DMA to finish
+            while( device.get()->dmaBusy() ) {
+                taskYIELD();
+            }
+
+            // Push via DMA
+            device.get()->pushImageDMA(
+                0, 0, sprite->width(), sprite->height(),
+                sprite->getBuffer(),
+                sprite->getColorDepth(),
+                sprite->getPalette()
+            );
+
             // Swap buffers
             draw_index = (draw_index + 1) % buffers.getCount();
             frame_counter++;
             frame_num++;
             
-            // Debug output every 60 frames
-            if (frame_num % 60 == 0) {
-                log_v("Frame %d rendered (FPS: %.2f)", frame_num, getFPS());
-            }
+
         } else {
             // No callback set yet, just wait
             if (frame_num == 0) {
@@ -174,14 +182,6 @@ void RenderTask::taskLoop() {
         
         updateFPS();
         
-        // Frame rate limiting
-        uint32_t frame_time = millis() - frame_start;
-        if (frame_time < target_frame_time) {
-            vTaskDelay(pdMS_TO_TICKS(target_frame_time - frame_time));
-        } else if (frame_time > target_frame_time * 2) {
-            log_v("Frame took %dms (target: %dms)", frame_time, target_frame_time);
-        }
-
         taskYIELD();
     }
     

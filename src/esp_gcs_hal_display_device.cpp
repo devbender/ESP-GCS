@@ -20,9 +20,6 @@ bool DisplayDevice::init() {
     }
     
     // Configure the panel before initializing
-    // NOTE: If LGFX_Parallel_9488 already has pins configured in its class,
-    // you may not need this. But typically you need to set bus configuration.
-    // Check your esp_gcs_display_parallel16_9488.h implementation
     pinMode(config.pin_cs, OUTPUT);
     pinMode(config.pin_blk, OUTPUT);
 

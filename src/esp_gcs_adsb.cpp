@@ -12,7 +12,7 @@ ESP_GCS_ADSB::ESP_GCS_ADSB()
     config.use_psram = true;
     config.target_fps = 60;
     config.framebuffer_count = 2;
-    config.color_depth = 16; // Use 16-bit color for better quality
+    config.color_depth = 8; 
     config.task_priority = 2;
     config.task_stack_size = 8192; // Increased stack size
 
