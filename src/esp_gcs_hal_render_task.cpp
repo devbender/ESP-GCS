@@ -139,10 +139,10 @@ void RenderTask::taskLoop() {
         processQueue();
         
         // Get the current drawing buffer
-        LGFX_Sprite* sprite = buffers.getBuffer(draw_index);
+        LGFX_Sprite* framebuffer = buffers.getBuffer(buffer_index);
         
-        if (!sprite) {
-            log_e("Buffer %d is null!", draw_index);
+        if (!framebuffer) {
+            log_e("Buffer %d is null!", buffer_index);
             vTaskDelay(pdMS_TO_TICKS(100));
             continue;
         }
@@ -150,7 +150,7 @@ void RenderTask::taskLoop() {
         if (current_callback) {
             
             // draw to fb
-            current_callback(*sprite, current_context);
+            current_callback(*framebuffer, current_context);
 
             // wait for any ongoing DMA to finish
             while( device.get()->dmaBusy() ) {
@@ -159,14 +159,14 @@ void RenderTask::taskLoop() {
 
             // Push via DMA
             device.get()->pushImageDMA(
-                0, 0, sprite->width(), sprite->height(),
-                sprite->getBuffer(),
-                sprite->getColorDepth(),
-                sprite->getPalette()
+                0, 0, framebuffer->width(), framebuffer->height(),
+                framebuffer->getBuffer(),
+                framebuffer->getColorDepth(),
+                framebuffer->getPalette()
             );
 
             // Swap buffers
-            draw_index = (draw_index + 1) % buffers.getCount();
+            buffer_index = (buffer_index + 1) % buffers.getCount();
             frame_counter++;
             frame_num++;
             

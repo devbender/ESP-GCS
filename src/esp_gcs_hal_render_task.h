@@ -71,7 +71,7 @@ private:
     // --- State private to the render task (no mutex needed) ---
     RenderCallback_t current_callback = nullptr;
     void* current_context = nullptr;
-    int draw_index = 0;
+    int buffer_index = 0;
     uint32_t frame_counter = 0;
     uint32_t last_fps_update = 0;
 };

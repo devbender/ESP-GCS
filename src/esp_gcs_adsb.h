@@ -38,7 +38,7 @@ class ESP_GCS_ADSB {
         std::mutex aircraft_list_mutex;
         std::unordered_map<uint32_t, aircraft_data_t> aircraft_list;
 
-    private:
+    //private:
         DisplayConfig config;
         DisplayDevice device;
         FrameBufferManager fbManager;

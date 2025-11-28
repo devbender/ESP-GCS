@@ -25,36 +25,32 @@ bool DisplayDevice::init() {
 
     digitalWrite(config.pin_cs, LOW);
     digitalWrite(config.pin_blk, HIGH);
-
     
-    log_i("Calling lcd->init()...");
+    log_i("Initializing lcd...");    
+    
     if (!lcd->init()) {
         log_e("lcd->init() failed");
         return false;
-    }
-    log_i("lcd->init() succeeded");
-
-    log_i("Calling lcd->initDMA()...");
+    }    
+    log_i("lcd->init() OK");
+    
     lcd->initDMA();
-    log_i("lcd->initDMA() done");
-    
     lcd->setRotation(config.rotation);
-    lcd->setBrightness(255);
-    
-    // Clear screen to verify it's working
-    lcd->fillScreen(TFT_RED);   delay(200);
-    lcd->fillScreen(TFT_GREEN); delay(200);
-    lcd->fillScreen(TFT_BLUE);  delay(200);    
     
     lcd->fillScreen(TFT_BLACK);
     lcd->setTextDatum(MC_DATUM); // set datum to middle center
-    lcd->drawString("DISPLAY INITIALIZED", lcd->width()/2, lcd->height()/2);
-    lcd->setTextDatum(TL_DATUM); // reset datum
-    delay(1500);
+    lcd->setTextColor(TFT_WHITE);
+    lcd->setTextSize(2);
+    lcd->drawString("ESP GCS v0.1a", lcd->width()/2, lcd->height()/2);
     
-    lcd->startWrite(); // Begin DMA transaction
+    lcd->setTextSize(1); // reset text size
+    lcd->setTextDatum(TL_DATUM); // reset datum    
     
-    initialized = true;
-    log_i("DisplayDevice fully initialized");
+    delay(2000);
+    
+    lcd->startWrite(); // Begin DMA transaction    
+    initialized = true;    
+    log_i("DisplayDevice fully initialized");    
+
     return true;
 }
